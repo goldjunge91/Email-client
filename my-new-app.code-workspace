@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			".eslintrc": "jsonc",
+			".prettierrc": "jsonc",
+			".eslintignore": "ignore"
+		}
+	}
+}
