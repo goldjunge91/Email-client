@@ -18,6 +18,8 @@ import {
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
 import windows from './windows';
+// import { verifyImapConnection, Account } from './core/mail/imapClient';
+import { verifyImapConnection, Account } from '../core/mail/imapClient';
 
 export default {
 	initialize() {
@@ -51,6 +53,16 @@ export default {
 			};
 		});
 
+		// TODO added new function to verify account its part of the new account verification
+		ipcMain.handle('verify-account', async (event, account: Account) => {
+			try {
+				await verifyImapConnection(account);
+				return { success: true };
+			} catch (error) {
+				// Gib eine strukturierte Fehlermeldung zurück
+				return { success: false, error: (error as Error).message };
+			}
+		});
 		// These do not send data back to the renderer process
 		ipcMain.on(
 			ipcChannels.SET_KEYBIND,

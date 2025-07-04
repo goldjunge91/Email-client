@@ -1,11 +1,16 @@
 import { $errors } from '@/config/strings';
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
-import { getOS } from '@/utils/getOS';
 import { NotificationOptions } from '@/types/notification';
+import { getOS } from '@/utils/getOS';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
+import { Account } from '../core/mail/imapClient';
 
 const channels = Object.values(ipcChannels);
+
+// Erweitere die Kanalliste um unseren neuen Kanal
+const allChannels = [...channels, 'verify-account'];
 
 const electronHandler = {
 	os: getOS(),
@@ -19,21 +24,26 @@ const electronHandler = {
 		ipcRenderer.send(ipcChannels.APP_NOTIFICATION, options),
 	playSound: (sound: string) => ipcRenderer.send(ipcChannels.PLAY_SOUND, sound),
 	openUrl: (url: string) => ipcRenderer.send(ipcChannels.OPEN_URL, url),
+
+	// TODO new function added to verify account
+	verifyAccount: (account: Account) =>
+		ipcRenderer.invoke('verify-account', account),
+
 	ipcRenderer: {
 		invoke(channel: string, ...args: unknown[]) {
-			if (!channels.includes(channel)) {
+			if (!allChannels.includes(channel)) {
 				throw new Error(`${$errors.invalidChannel}: ${channel}`);
 			}
 			return ipcRenderer.invoke(channel, ...args);
 		},
 		send(channel: string, ...args: unknown[]) {
-			if (!channels.includes(channel)) {
+			if (!allChannels.includes(channel)) {
 				return;
 			}
 			return ipcRenderer.send(channel, ...args);
 		},
 		on(channel: string, func: (...args: unknown[]) => void) {
-			if (!channels.includes(channel)) {
+			if (!allChannels.includes(channel)) {
 				return;
 			}
 			const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
@@ -45,7 +55,7 @@ const electronHandler = {
 			};
 		},
 		once(channel: string, func: (...args: unknown[]) => void) {
-			if (!channels.includes(channel)) {
+			if (!allChannels.includes(channel)) {
 				return;
 			}
 			ipcRenderer.once(channel, (_event, ...args) => func(...args));

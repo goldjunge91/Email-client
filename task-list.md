@@ -12,6 +12,16 @@
 
 1. **IMAP/POP3 Account Setup**
 
+    * **1.1** 🟡 **Create `AccountForm.tsx` – Eingabe für Server, Port, SSL, Auth (in Arbeit)**
+    * **1.2** `imapClient.ts` implementieren – Verbindung herstellen + speichern
+    * **1.3** POP3-Adapter `pop3Client.ts` – optional, gleiche Struktur
+
+2.  **Multi‑Account UI**
+
+    * **2.1** `Sidebar.tsx` – Liste aller Accounts + Add‑Button
+    * **2.2** Store (Redux/Zustand): Accounts verwalten, Speichern in lokalem Aufbewahrungsstore
+
+
    * **1.1** Create `AccountForm.tsx` – Eingabe für Server, Port, SSL, Auth
    * **1.2** `imapClient.ts` implementieren – Verbindung herstellen + speichern
    * **1.3** POP3-Adapter `pop3Client.ts` – optional, gleiche Struktur
