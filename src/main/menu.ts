@@ -101,6 +101,29 @@ export default class MenuBuilder {
 		],
 	};
 
+	/**
+	 * TODO: Add more MenuItems when implementing other futures. Part 1 / 
+	 */
+	subMenuTools: MenuItemConstructorOptions = {
+		label: 'Tools',
+		submenu: [
+			{
+				label: 'Tool 1',
+				click: () => {
+					console.log('Tool 1 clicked');
+				},
+				id: 'tool1',
+			},
+			{
+				label: 'Tool 2',
+				click: () => {
+					console.log('Tool 2 clicked');
+				},
+				id: 'tool2',
+			},
+		],
+	};
+
 	subMenuHelp: MenuItemConstructorOptions = {
 		label: 'Help',
 		submenu: [
@@ -267,6 +290,7 @@ export default class MenuBuilder {
 			subMenuView,
 			subMenuWindow,
 			this.subMenuSettings,
+			this.subMenuTools, // TODO: Add more MenuItems when implementing other futures. Part 2 / 
 			this.subMenuHelp,
 			...(is.debug ? [this.subMenuDev] : []),
 		];
@@ -338,6 +362,28 @@ export default class MenuBuilder {
 									id: 'toggleFullScreen',
 								},
 							],
+			},
+			{
+				/**
+				 * TODO: Add more MenuItems when implementing other futures starting at line 362-363 to line 386 . Part 3 /
+				 */
+				label: '&Tools',
+				submenu: [
+					{
+						label: 'Tool 1',
+						click: () => {
+							console.log('Tool 1 clicked');
+						},
+						id: 'tool1',
+					},
+					{
+						label: 'Tool 2',
+						click: () => {
+							console.log('Tool 2 clicked');
+						},
+						id: 'tool2',
+					},
+				],
 			},
 			this.subMenuSettings,
 			this.subMenuHelp,
