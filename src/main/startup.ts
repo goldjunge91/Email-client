@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { app } from 'electron';
 import Logger from 'electron-log/main';
 import { $init } from '../config/strings';
@@ -5,7 +7,7 @@ import analytics from './analytics';
 import appFlags from './app-flags';
 import appListeners from './app-listeners';
 import { AutoUpdate } from './auto-update';
-import { createChildWindow, createMainWindow } from './create-window';
+import { createMainWindow } from './create-window';
 import debugging from './debugging';
 import errorHandling from './error-handling';
 import kb from './keyboard';

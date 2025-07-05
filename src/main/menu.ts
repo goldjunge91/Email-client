@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+// eslint-disable-next-line import/no-extraneous-dependencies
 import {
 	BrowserWindow,
 	Menu,
@@ -102,7 +104,7 @@ export default class MenuBuilder {
 	};
 
 	/**
-	 * TODO: Add more MenuItems when implementing other futures. Part 1 / 
+	 * TODO: Add more MenuItems when implementing other futures. Part 1 /
 	 */
 	subMenuTools: MenuItemConstructorOptions = {
 		label: 'Tools',
@@ -290,7 +292,7 @@ export default class MenuBuilder {
 			subMenuView,
 			subMenuWindow,
 			this.subMenuSettings,
-			this.subMenuTools, // TODO: Add more MenuItems when implementing other futures. Part 2 / 
+			this.subMenuTools, // TODO: Add more MenuItems when implementing other futures. Part 2 /
 			this.subMenuHelp,
 			...(is.debug ? [this.subMenuDev] : []),
 		];
