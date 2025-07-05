@@ -6,11 +6,54 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { Account } from '../core/mail/imapClient';
+import { 
+  MailAccount, 
+  Mail, 
+  MailFolder,
+  MailRule,
+  MailFilter 
+} from '../types/mail';
 
 const channels = Object.values(ipcChannels);
 
-// Erweitere die Kanalliste um unseren neuen Kanal
-const allChannels = [...channels, 'verify-account'];
+// Mail-specific channels
+const mailChannels = [
+  'verify-account',
+  'mail:add-account',
+  'mail:remove-account',
+  'mail:update-account',
+  'mail:connect-account',
+  'mail:disconnect-account',
+  'mail:get-folders',
+  'mail:fetch-mails',
+  'mail:mark-as-read',
+  'mail:mark-as-starred',
+  'mail:move-mail',
+  'mail:delete-mail',
+  'mail:send-mail',
+  'mail:sync-account',
+  'mail:sync-folder',
+  'mail:search',
+  'mail:add-rule',
+  'mail:update-rule',
+  'mail:remove-rule',
+  'mail:get-rules',
+  'mail:apply-rules',
+  'mail:export-rules',
+  'mail:import-rules',
+  // Events
+  'mail:account-added',
+  'mail:account-removed',
+  'mail:sync-started',
+  'mail:sync-progress',
+  'mail:sync-completed',
+  'mail:mails-added',
+  'mail:mails-updated',
+  'mail:error'
+];
+
+// Erweitere die Kanalliste um alle Mail-Kanäle
+const allChannels = [...channels, ...mailChannels];
 
 const electronHandler = {
 	os: getOS(),

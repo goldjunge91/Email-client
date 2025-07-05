@@ -11,6 +11,7 @@ import { app } from 'electron';
 import Logger from 'electron-log/main';
 import { $errors, $init } from '../config/strings';
 import ipc from './ipc';
+import { initializeMailIpc } from './mail-ipc';
 import { ready, startup } from './startup';
 
 // Initialize the timer
