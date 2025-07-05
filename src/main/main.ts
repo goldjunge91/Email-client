@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 
 /*
@@ -21,6 +22,9 @@ console.timeLog(app.name, $init.app);
 // Register ipcMain listeners
 ipc.initialize();
 
+// Initialize Mail IPC handlers
+initializeMailIpc();
+
 // SETUP APP (runs after startup())
 app
 	.whenReady()
@@ -31,7 +35,6 @@ app
 
 // LAUNCH THE APP
 startup();
-
 
 // See the idle() function in src/main/startup.ts
 // it's called in the ipcMain.on(ipcChannels.RENDERER_READY) listener

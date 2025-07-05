@@ -5,51 +5,47 @@ import { getOS } from '@/utils/getOS';
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
-import { Account } from '../core/mail/imapClient';
-import { 
-  MailAccount, 
-  Mail, 
-  MailFolder,
-  MailRule,
-  MailFilter 
-} from '../types/mail';
+import { MailAccount, Mail, MailFolder, MailRule } from '../types/mail';
 
 const channels = Object.values(ipcChannels);
 
 // Mail-specific channels
 const mailChannels = [
-  'verify-account',
-  'mail:add-account',
-  'mail:remove-account',
-  'mail:update-account',
-  'mail:connect-account',
-  'mail:disconnect-account',
-  'mail:get-folders',
-  'mail:fetch-mails',
-  'mail:mark-as-read',
-  'mail:mark-as-starred',
-  'mail:move-mail',
-  'mail:delete-mail',
-  'mail:send-mail',
-  'mail:sync-account',
-  'mail:sync-folder',
-  'mail:search',
-  'mail:add-rule',
-  'mail:update-rule',
-  'mail:remove-rule',
-  'mail:get-rules',
-  'mail:apply-rules',
-  'mail:export-rules',
-  'mail:import-rules',
-  // Events
-  'mail:account-added',
-  'mail:account-removed',
-  'mail:sync-started',
-  'mail:sync-progress',
-  'mail:sync-completed',
-  'mail:mails-added',
-  'mail:mails-updated',
-  'mail:error'
+	'verify-account',
+	'mail:add-account',
+	'mail:remove-account',
+	'mail:update-account',
+	'mail:connect-account',
+	'mail:disconnect-account',
+	'mail:get-folders',
+	'mail:fetch-mails',
+	'mail:mark-as-read',
+	'mail:mark-as-starred',
+	'mail:move-mail',
+	'mail:delete-mail',
+	'mail:send-mail',
+	'mail:sync-account',
+	'mail:sync-folder',
+	'mail:search',
+	'mail:add-rule',
+	'mail:update-rule',
+	'mail:remove-rule',
+	'mail:get-rules',
+	'mail:apply-rules',
+	'mail:export-rules',
+	'mail:import-rules',
+	// Window management
+	'window:open-mail',
+	'set-mail-id',
+	// Events
+	'mail:account-added',
+	'mail:account-removed',
+	'mail:sync-started',
+	'mail:sync-progress',
+	'mail:sync-completed',
+	'mail:mails-added',
+	'mail:mails-updated',
+	'mail:error',
 ];
 
 // Erweitere die Kanalliste um alle Mail-Kanäle
@@ -69,8 +65,112 @@ const electronHandler = {
 	openUrl: (url: string) => ipcRenderer.send(ipcChannels.OPEN_URL, url),
 
 	// TODO new function added to verify account
-	verifyAccount: (account: Account) =>
+	verifyAccount: (account: any) =>
 		ipcRenderer.invoke('verify-account', account),
+
+	// Mail API
+	mail: {
+		// Account Operations
+		addAccount: (account: MailAccount) =>
+			ipcRenderer.invoke('mail:add-account', account),
+		removeAccount: (accountId: string) =>
+			ipcRenderer.invoke('mail:remove-account', accountId),
+		updateAccount: (accountId: string, account: MailAccount) =>
+			ipcRenderer.invoke('mail:update-account', accountId, account),
+		connectAccount: (accountId: string) =>
+			ipcRenderer.invoke('mail:connect-account', accountId),
+		disconnectAccount: (accountId: string) =>
+			ipcRenderer.invoke('mail:disconnect-account', accountId),
+
+		// Folder Operations
+		getFolders: (accountId: string) =>
+			ipcRenderer.invoke('mail:get-folders', accountId),
+
+		// Mail Operations
+		fetchMails: (accountId: string, folderId: string, limit?: number) =>
+			ipcRenderer.invoke('mail:fetch-mails', accountId, folderId, limit),
+		markAsRead: (mailId: string) =>
+			ipcRenderer.invoke('mail:mark-as-read', mailId),
+		markAsStarred: (mailId: string) =>
+			ipcRenderer.invoke('mail:mark-as-starred', mailId),
+		moveMail: (mailId: string, folderId: string) =>
+			ipcRenderer.invoke('mail:move-mail', mailId, folderId),
+		deleteMail: (mailId: string) =>
+			ipcRenderer.invoke('mail:delete-mail', mailId),
+		sendMail: (mail: any) => ipcRenderer.invoke('mail:send-mail', mail),
+
+		// Sync Operations
+		syncAccount: (accountId: string) =>
+			ipcRenderer.invoke('mail:sync-account', accountId),
+		syncFolder: (accountId: string, folderId: string) =>
+			ipcRenderer.invoke('mail:sync-folder', accountId, folderId),
+
+		// Search Operations
+		search: (accountId: string, query: string) =>
+			ipcRenderer.invoke('mail:search', accountId, query),
+
+		// Rule Operations
+		addRule: (rule: MailRule) => ipcRenderer.invoke('mail:add-rule', rule),
+		updateRule: (ruleId: string, rule: MailRule) =>
+			ipcRenderer.invoke('mail:update-rule', ruleId, rule),
+		removeRule: (ruleId: string) =>
+			ipcRenderer.invoke('mail:remove-rule', ruleId),
+		getRules: (accountId: string) =>
+			ipcRenderer.invoke('mail:get-rules', accountId),
+		applyRules: (accountId: string, mailIds: string[]) =>
+			ipcRenderer.invoke('mail:apply-rules', accountId, mailIds),
+		exportRules: (accountId: string) =>
+			ipcRenderer.invoke('mail:export-rules', accountId),
+		importRules: (accountId: string, rules: MailRule[]) =>
+			ipcRenderer.invoke('mail:import-rules', accountId, rules),
+
+		// Event Listeners
+		onAccountAdded: (callback: (account: MailAccount) => void) =>
+			ipcRenderer.on('mail:account-added', (_event, account) =>
+				callback(account),
+			),
+		onAccountUpdated: (callback: (account: MailAccount) => void) =>
+			ipcRenderer.on('mail:account-updated', (_event, account) =>
+				callback(account),
+			),
+		onAccountRemoved: (callback: (accountId: string) => void) =>
+			ipcRenderer.on('mail:account-removed', (_event, accountId) =>
+				callback(accountId),
+			),
+		onSyncStarted: (callback: (accountId: string) => void) =>
+			ipcRenderer.on('mail:sync-started', (_event, accountId) =>
+				callback(accountId),
+			),
+		onSyncCompleted: (callback: (accountId: string) => void) =>
+			ipcRenderer.on('mail:sync-completed', (_event, accountId) =>
+				callback(accountId),
+			),
+		onSyncError: (callback: (accountId: string, error: string) => void) =>
+			ipcRenderer.on('mail:sync-error', (_event, accountId, error) =>
+				callback(accountId, error),
+			),
+		onMailsReceived: (callback: (accountId: string, mails: Mail[]) => void) =>
+			ipcRenderer.on('mail:mails-received', (_event, accountId, mails) =>
+				callback(accountId, mails),
+			),
+		onMailUpdated: (callback: (mail: Mail) => void) =>
+			ipcRenderer.on('mail:mail-updated', (_event, mail) => callback(mail)),
+		onMailDeleted: (callback: (mailId: string) => void) =>
+			ipcRenderer.on('mail:mail-deleted', (_event, mailId) => callback(mailId)),
+		onFoldersReceived: (
+			callback: (accountId: string, folders: MailFolder[]) => void,
+		) =>
+			ipcRenderer.on('mail:folders-received', (_event, accountId, folders) =>
+				callback(accountId, folders),
+			),
+	},
+
+	// Window Management
+	window: {
+		openMail: () => ipcRenderer.invoke('window:open-mail'),
+		onMailIdSet: (callback: (mailId: string) => void) =>
+			ipcRenderer.on('set-mail-id', (_event, mailId) => callback(mailId)),
+	},
 
 	ipcRenderer: {
 		invoke(channel: string, ...args: unknown[]) {

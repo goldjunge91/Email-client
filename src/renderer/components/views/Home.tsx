@@ -1,14 +1,18 @@
+/* eslint-disable no-console */
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PROTOCOL } from '@/config/config';
 import { nav } from '@/renderer/config/nav';
 import { useGlobalContext } from '@/renderer/context/global-context';
+import { useMailStoreContext } from '@/renderer/context/MailStoreProvider';
+import { MailStoreTestComponent } from '@/renderer/components/debug/MailStoreTestComponent';
 import styles from '@/renderer/styles/CssModuleExample.module.scss';
 import { Link } from 'react-router-dom';
 import { InputComboboxForm } from '../input/InputComboboxForm';
 
 export function Home() {
 	const { settings, setSettings } = useGlobalContext();
+	const { store } = useMailStoreContext();
 
 	const handleThemeChange = (value: string) => {
 		setSettings({ theme: value as 'light' | 'dark' | 'system' });
@@ -66,6 +70,19 @@ export function Home() {
 							<Button className="w-full mb-2">Go to Settings</Button>
 						</Link>
 						<Button
+							className="w-full mb-2"
+							variant="outline"
+							onClick={async () => {
+								try {
+									await window.electron.window.openMail();
+								} catch {
+									// Failed to open mail app
+								}
+							}}
+						>
+							Open Mail View
+						</Button>
+						<Button
 							className="w-full"
 							onClick={() =>
 								window.electron.ipcRenderer.send('open-child-window')
@@ -75,6 +92,23 @@ export function Home() {
 						</Button>
 					</CardContent>
 				</Card>
+
+				<Card className="w-full max-w-md">
+					<CardHeader>
+						<CardTitle>Mail Store Status</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-2">
+						<p>Accounts: {store.accounts.length}</p>
+						<p>Mails: {store.mails.size}</p>
+						<p>Folders: {store.folders.size}</p>
+						<p>Syncing: {store.isSyncing ? 'Yes' : 'No'}</p>
+					</CardContent>
+				</Card>
+
+				{/* Detaillierte Mail Store Test Komponente */}
+				<div className="w-full">
+					<MailStoreTestComponent />
+				</div>
 			</div>
 		</div>
 	);

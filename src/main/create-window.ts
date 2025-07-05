@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-param-reassign */
 import {
 	BrowserWindow,
@@ -152,22 +153,44 @@ export const createMainWindow = async () => {
 	return window;
 };
 
-export const createChildWindow = async () => {
+export interface CreateChildWindowOptions {
+	title?: string;
+	width?: number;
+	height?: number;
+	route?: string;
+	resizable?: boolean;
+	minimizable?: boolean;
+	maximizable?: boolean;
+	parent?: BrowserWindow;
+}
+
+export const createChildWindow = async (options?: CreateChildWindowOptions) => {
 	const mainWindowBounds = windows.mainWindow?.getBounds();
-	const options: BrowserWindowConstructorOptions = {
+	const windowOptions: BrowserWindowConstructorOptions = {
 		frame: true,
 		x: mainWindowBounds ? mainWindowBounds.x + 60 : undefined,
 		y: mainWindowBounds ? mainWindowBounds.y + 60 : undefined,
+		title: options?.title || 'Child Window',
+		width: options?.width || 800,
+		height: options?.height || 600,
+		resizable: options?.resizable !== false,
+		minimizable: options?.minimizable !== false,
+		maximizable: options?.maximizable !== false,
+		parent: options?.parent || windows.mainWindow || undefined,
 	};
 
-	const window = createWindow(options);
+	const window = createWindow(windowOptions);
 
 	window.on('ready-to-show', () => {
 		window.show();
 	});
 
-	// Load the window
-	window.loadURL(resolveHtmlPath('child.html'));
+	// Load the appropriate page based on route
+	if (options?.route?.startsWith('/mail-app')) {
+		window.loadURL(resolveHtmlPath('mail.html'));
+	} else {
+		window.loadURL(resolveHtmlPath('child.html'));
+	}
 
 	return window;
 };

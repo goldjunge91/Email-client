@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // DATA SHOULD ONLY FLOW DOWNWARDS
 // We pass data from the main process to the renderer process using IPC
 // We also use IPC to update data
@@ -132,7 +133,7 @@ export function GlobalContextProvider({
 				ipcChannels.APP_NOTIFICATION,
 			);
 		};
-	}, []);
+	}, [settings.allowSounds]);
 
 	// Electron API functions
 	const setSettings = useCallback((newSettings: Partial<SettingsType>) => {

@@ -1,4 +1,6 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import { Menu, app, ipcMain, shell } from 'electron';
+import Account from '@/types/mail';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { CustomAcceleratorsType } from '../types/keyboard';
@@ -19,7 +21,7 @@ import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
 import windows from './windows';
 // import { verifyImapConnection, Account } from './core/mail/imapClient';
-import { verifyImapConnection, Account } from '../core/mail/imapClient';
+import { verifyImapConnection } from '../core/mail/imapClient';
 
 export default {
 	initialize() {
@@ -44,7 +46,7 @@ export default {
 		});
 
 		// These send data back to the renderer process
-		ipcMain.handle(ipcChannels.GET_RENDERER_SYNC, (id) => {
+		ipcMain.handle(ipcChannels.GET_RENDERER_SYNC, () => {
 			return {
 				settings: getSettings(),
 				keybinds: getKeybinds(),
@@ -107,6 +109,25 @@ export default {
 				windows.childWindow = await createChildWindow();
 			} else {
 				windows.childWindow.focus();
+			}
+		});
+
+		// Mail window management
+		ipcMain.handle('window:open-mail', async () => {
+			try {
+				const mailWindow = await createChildWindow({
+					title: 'Mail App',
+					width: 1200,
+					height: 800,
+					route: '/mail-app',
+					resizable: true,
+					minimizable: true,
+					maximizable: true,
+				});
+
+				return { success: true, windowId: mailWindow.id };
+			} catch (error) {
+				return { success: false, error: (error as Error).message };
 			}
 		});
 	},
