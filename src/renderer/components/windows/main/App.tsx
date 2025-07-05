@@ -14,8 +14,29 @@ import SettingsLayout from '@/renderer/components/layout/SettingsLayout';
 import ErrorPage from '@/renderer/components/views/ErrorPage';
 import { settingsNavItems } from '@/renderer/config/nav';
 import '@/renderer/styles/globals.scss';
+import { AuthModal } from '@/renderer/components/auth/AuthModal';
+import { useAuth } from '@/renderer/context/AuthContextNew';
 
 export default function App() {
+	const { user, isInitialized } = useAuth();
+
+	// Show loading until auth is initialized
+	if (!isInitialized) {
+		return (
+			<div className="flex items-center justify-center h-screen">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
+					<p className="text-gray-600">Loading...</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Show auth modal if user is not logged in
+	if (!user) {
+		return <AuthModal />;
+	}
+
 	const index =
 		settingsNavItems.find((item) => item.index) || settingsNavItems[0];
 

@@ -22,9 +22,17 @@ import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
 import windows from './windows';
 // import { verifyImapConnection, Account } from './core/mail/imapClient';
 import { verifyImapConnection } from '../core/mail/imapClient';
+import { initializeAuthIPC } from './ipc/auth';
+import { initializeMailIPC } from './ipc/mail';
+import { initializeEncryptionIPC } from './ipc/encryption';
 
 export default {
 	initialize() {
+		// Initialize all IPC handlers
+		initializeAuthIPC();
+		initializeMailIPC();
+		initializeEncryptionIPC();
+
 		// Activate the idle state when the renderer process is ready
 		ipcMain.once(ipcChannels.RENDERER_READY, () => {
 			idle();
@@ -111,6 +119,8 @@ export default {
 				windows.childWindow.focus();
 			}
 		});
+
+		// Encryption services are now handled in ./ipc/encryption.ts
 
 		// Mail window management
 		ipcMain.handle('window:open-mail', async () => {
