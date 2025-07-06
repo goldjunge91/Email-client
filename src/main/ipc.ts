@@ -1,6 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { Menu, app, ipcMain, shell } from 'electron';
 import Account from '@/types/mail';
+import { initializeMailIpc } from './ipc/mail-ipc';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { CustomAcceleratorsType } from '../types/keyboard';
@@ -23,14 +24,13 @@ import windows from './windows';
 import { initializeAuthIPC } from './ipc/auth';
 import { verifyImapConnection } from '../core/mail/imapClient';
 import { initializeEncryptionIPC } from './ipc/encryption';
-import { initializeMailIpc } from './mail-ipc';
 
 export default {
 	initialize() {
 		// Initialize all IPC handlers
 		initializeAuthIPC();
-		initializeMailIpc();
 		initializeEncryptionIPC();
+		initializeMailIpc();
 
 		// Activate the idle state when the renderer process is ready
 		ipcMain.once(ipcChannels.RENDERER_READY, () => {

@@ -19,8 +19,8 @@ import {
 import { Checkbox } from '@/renderer/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/renderer/components/ui/alert';
 import { Loader2, AlertCircle } from 'lucide-react';
-import type { MailAccount } from '@/renderer/services/mailService';
-import { mailService } from '@/renderer/services/mailService';
+import type { MailAccount } from '@/renderer/utils/mailService';
+import { mailService } from '@/renderer/utils/mailService';
 
 interface AccountFormData {
 	email: string;

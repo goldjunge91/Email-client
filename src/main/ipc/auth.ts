@@ -2,7 +2,49 @@ import { ipcMain } from 'electron';
 import { authService } from '../database/services/authService';
 
 /**
- * IPC handlers for authentication operations
+ * IPC-Handler für Authentifizierungsoperationen im Main-Prozess.
+ *
+ * Gegenstellen:
+ *   - Renderer: Authentifizierungs-UI und Logik im Renderer-Prozess (z.B. Login-Formulare, Registrierung, Profilverwaltung)
+ *   - Service: {@link ../database/services/authService} (führt die eigentliche Authentifizierungslogik aus)
+ *
+ * Funktion:
+ *   Stellt IPC-Handler für alle Authentifizierungs- und Benutzerverwaltungs-Operationen bereit. Diese Methoden werden vom Renderer-Prozess über IPC aufgerufen und führen die Authentifizierungslogik im Main-Prozess aus.
+ *
+ * Öffentliche Methoden (IPC-Handler):
+ *
+ *   'auth:register' (userData: { name: string; email: string; password: string }):
+ *     Registriert einen neuen Benutzer.
+ *     @param userData   Objekt mit name, email, password
+ *     @returns          { success: true, user } oder { success: false, error }
+ *
+ *   'auth:login' (credentials: { email: string; password: string }):
+ *     Meldet einen Benutzer an.
+ *     @param credentials   Objekt mit email, password
+ *     @returns             { success: true, user } oder { success: false, error }
+ *
+ *   'auth:get-user' (userId: number):
+ *     Holt einen Benutzer anhand der ID.
+ *     @param userId   Die User-ID
+ *     @returns        { success: true, user } oder { success: false, error }
+ *
+ *   'auth:update-profile' (userId: number, updates: { name?: string; email?: string }):
+ *     Aktualisiert das Benutzerprofil.
+ *     @param userId   Die User-ID
+ *     @param updates  Objekt mit optional name und email
+ *     @returns        { success: true, user } oder { success: false, error }
+ *
+ *   'auth:change-password' (userId: number, data: { currentPassword: string; newPassword: string }):
+ *     Ändert das Benutzerpasswort.
+ *     @param userId   Die User-ID
+ *     @param data     Objekt mit currentPassword, newPassword
+ *     @returns        { success: true } oder { success: false, error }
+ *
+ *   'auth:delete-account' (userId: number, password: string):
+ *     Löscht das Benutzerkonto.
+ *     @param userId   Die User-ID
+ *     @param password Das aktuelle Passwort
+ *     @returns        { success: true } oder { success: false, error }
  */
 export function initializeAuthIPC(): void {
 	// Register user

@@ -30,10 +30,13 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/renderer/context/AuthContextNew';
-import { mailService } from '@/renderer/services/mailService';
-import type { MailAccount } from '@/renderer/services/mailService';
+// import { mailService } from './renderer/utils/mailService';
+// import type { MailAccount } from './renderer/utils/mailService';
+import { MailService, mailService } from '@/renderer/utils/mailService';
 import { AddAccountModal } from './AddAccountModal';
 import { ProfileEditModal } from './ProfileEditModal';
+// import { MailService, mailService } from '../../utils/mailService';
+import type { MailAccount } from '../../../types/mail';
 
 interface SettingsModalProps {
 	open: boolean;
@@ -74,7 +77,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 		if (!user) return;
 		setLoadingAccounts(true);
 		try {
-			const userAccounts = await mailService.getAccountsByUserId(user.id);
+			const userAccounts = await MailService.getAccountsByUserId(user.id);
 			setAccounts(userAccounts);
 		} catch {
 			// Handle error silently or show user feedback

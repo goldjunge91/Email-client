@@ -1,28 +1,10 @@
 /* eslint-disable no-console */
 import { eq, or } from 'drizzle-orm';
 import { randomBytes, pbkdf2Sync } from 'crypto';
+import type { LoginCredentials, RegisterData, AuthResult } from '@/types/auth';
 import { getDatabase } from '../connection';
 import { users } from '../schema';
 import type { User, NewUser } from '../schema';
-
-export interface LoginCredentials {
-	email: string;
-	password: string;
-}
-
-export interface RegisterData {
-	email: string;
-	username: string;
-	password: string;
-	firstName?: string;
-	lastName?: string;
-}
-
-export interface AuthResult {
-	success: boolean;
-	user?: User;
-	error?: string;
-}
 
 export class AuthService {
 	private db = getDatabase();

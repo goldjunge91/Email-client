@@ -5,13 +5,12 @@ import { EventEmitter } from 'events';
 import Imap from 'node-imap';
 import { simpleParser, ParsedMail } from 'mailparser';
 import { v4 as uuidv4 } from 'uuid';
-import {
+import type {
 	Mail,
 	MailFolder,
-	MailAccount,
 	MailAddress,
 	MailAttachment,
-} from '../../types/mail';
+} from '@/types/mail';
 
 export interface ImapConnectionOptions {
 	user: string;

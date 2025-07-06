@@ -1,12 +1,5 @@
 ## 🧱 Taskliste
 
-### 0. Setup & Basisstruktur
-
-0. **Projekt-Basis vorbereiten**
-
-   * `git clone https://github.com/shipkit-io/electron-bones.git`
-   * ✅ Boilerplate geklont und `pnpm install` ausgeführt.
-   * Einstellung prüfen: `electron .` startet App im Dev-Modus.
 
 ### 1. Account-Verwaltung & Mehrfach-Konten
 

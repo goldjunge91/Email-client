@@ -1,8 +1,8 @@
 // todo: menubar ellipsis on overflow
 import { MainLayout } from '@/renderer/components/layout/MainLayout';
 import { Home } from '@/renderer/components/views/Home';
-import MailView from '@/renderer/components/views/MailView';
-import MailDetail from '@/renderer/components/views/MailDetail';
+// import MailView from '@/renderer/components/views/MailView';
+// import MailDetail from '@/renderer/components/views/MailDetail';
 import {
 	Route,
 	RouterProvider,
@@ -62,8 +62,8 @@ export default function App() {
 			</Route>
 
 			<Route index element={<Home />} />
-			<Route path="mail" element={<MailView />} />
-			<Route path="mail-detail/:mailId" element={<MailDetail />} />
+			{/* <Route path="mail" element={<MailView />} /> */}
+			{/* <Route path="mail-detail/:mailId" element={<MailDetail />} /> */}
 			<Route path="*" element={<Home />} />
 		</Route>
 	);

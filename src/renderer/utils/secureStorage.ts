@@ -1,6 +1,28 @@
 /**
- * Secure storage wrapper that automatically encrypts/decrypts sensitive data
- * Uses IPC to communicate with the main process for encryption operations
+ * Sicherer Storage-Wrapper für den Renderer-Prozess.
+ *
+ * Gegenstellen:
+ *   - Verschlüsselung: {@link ./encryption.ts} (nutzt die IPC-Methoden für Krypto)
+ *   - Main-Prozess: {@link ../../main/ipc/encryption.ts} (stellt die Krypto-Methoden bereit)
+ *
+ * Funktion:
+ *   Speichert beliebige Daten im localStorage und verschlüsselt dabei automatisch alle sensiblen Felder (z.B. Passwort, Token, Secret, Key, Auth). Entschlüsselt diese Felder beim Auslesen wieder automatisch. Nutzt dazu die Verschlüsselungs-IPC-Methoden, die im Main-Prozess implementiert sind.
+ *
+ * Öffentliche Methoden:
+ *
+ *   store(key: string, data: any): Promise<void>
+ *     Speichert ein beliebiges Objekt unter dem gegebenen Schlüssel. Sensible Felder werden verschlüsselt.
+ *     @param key   Der localStorage-Schlüssel
+ *     @param data  Das zu speichernde Objekt (beliebige Struktur)
+ *
+ *   retrieve(key: string): Promise<any>
+ *     Lädt ein Objekt aus dem localStorage und entschlüsselt sensible Felder automatisch.
+ *     @param key   Der localStorage-Schlüssel
+ *     @returns     Das gespeicherte Objekt oder null
+ *
+ *   remove(key: string): void
+ *     Entfernt einen Eintrag aus dem localStorage.
+ *     @param key   Der localStorage-Schlüssel
  */
 export class SecureStorage {
 	private static sensitiveFields = new Set([

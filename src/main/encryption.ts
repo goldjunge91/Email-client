@@ -1,8 +1,38 @@
 import { createCipher, createDecipher, randomBytes } from 'crypto';
 
 /**
- * Encryption service for the main process
- * This runs in Node.js context where crypto module is available
+ * Encryption service für den Main-Prozess (Node.js-Kontext).
+ *
+ * Gegenstelle:
+ *   - IPC-Handler: {@link ../ipc/encryption.ts} (stellt die Methoden per IPC bereit)
+ *   - Renderer: {@link ../../renderer/utils/encryption.ts} (nutzt die Methoden via IPC)
+ *
+ * Diese Klasse implementiert AES-256-CBC Verschlüsselung/Entschlüsselung und wird ausschließlich im Main-Prozess verwendet.
+ * Der Schlüssel sollte in Produktion sicher verwaltet werden (z.B. Umgebungsvariable).
+ * Funktion:
+ *   Bietet Methoden zum Verschlüsseln, Entschlüsseln und Prüfen von Strings im Main-Prozess. Die Methoden werden über IPC für den Renderer bereitgestellt und nutzen AES-256-CBC.
+ *   Der Schlüssel sollte in Produktion sicher verwaltet werden (z.B. Umgebungsvariable).
+ *
+ * Öffentliche Methoden:
+ *
+ *   encrypt(text: string): string
+ *     Verschlüsselt einen String.
+ *     @param text   Der zu verschlüsselnde Klartext
+ *     @returns      Der verschlüsselte String (Format: IV:Ciphertext)
+ *
+ *   decrypt(encryptedText: string): string
+ *     Entschlüsselt einen String.
+ *     @param encryptedText   Der verschlüsselte String (Format: IV:Ciphertext)
+ *     @returns               Der entschlüsselte Klartext
+ *
+ *   generateKey(): string
+ *     Generiert einen zufälligen Schlüssel (hex-codiert).
+ *     @returns   Neuer Schlüssel (hex)
+ *
+ *   isEncrypted(text: string): boolean
+ *     Prüft, ob ein String verschlüsselt aussieht (Heuristik, keine Garantie).
+ *     @param text   Der zu prüfende String
+ *     @returns      true, wenn vermutlich verschlüsselt
  */
 export class EncryptionService {
 	private static readonly ALGORITHM = 'aes-256-cbc';

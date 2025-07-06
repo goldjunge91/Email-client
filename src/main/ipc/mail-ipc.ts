@@ -1,14 +1,9 @@
 import { ipcMain } from 'electron';
-import { mailService } from './database/services/mailService';
-/* eslint-disable import/no-extraneous-dependencies */
-import { ImapClient } from '../core/mail/imapClient';
-import { SmtpClient } from '../core/mail/smtpClient';
-import { ruleEngine } from '../core/rules/ruleEngine';
-// import { mailService } from '../database/services/mailService';
-import { MailAccount, MailRule } from '../types/mail';
-
-// Import windows from the main process
-// import windows from './windows';
+import { MailAccount, MailRule } from '@/types/mail';
+import { ImapClient } from '../../core/mail/imapClient';
+import { SmtpClient } from '../../core/mail/smtpClient';
+import { ruleEngine } from '../../core/rules/ruleEngine';
+import { mailService } from '../database/services/mailService';
 
 // Store active IMAP/SMTP clients
 const imapClients = new Map<string, ImapClient>();

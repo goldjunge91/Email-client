@@ -2,7 +2,13 @@ import { ipcMain } from 'electron';
 import { EncryptionService } from '../encryption';
 
 /**
- * IPC handlers for encryption operations
+ * IPC-Handler für Verschlüsselungsoperationen im Main-Prozess.
+ *
+ * Gegenstellen:
+ *   - Implementierung: {@link ../encryption.ts} (führt die eigentliche Krypto-Logik aus)
+ *   - Renderer: {@link ../../renderer/utils/encryption.ts} (nutzt diese IPC-Handler)
+ *
+ * Stellt die Methoden 'crypto:encrypt', 'crypto:decrypt' und 'crypto:is-encrypted' per IPC bereit.
  */
 export function initializeEncryptionIPC(): void {
 	// Encrypt data
