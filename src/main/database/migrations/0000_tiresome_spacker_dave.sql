@@ -1,5 +1,6 @@
 CREATE TABLE "mail_accounts" (
 	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"email" varchar(255) NOT NULL,
 	"provider" varchar(100) NOT NULL,
@@ -110,6 +111,32 @@ CREATE TABLE "sync_status" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "users" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"uuid" varchar(36) NOT NULL,
+	"email" varchar(255) NOT NULL,
+	"username" varchar(100) NOT NULL,
+	"first_name" varchar(100),
+	"last_name" varchar(100),
+	"password_hash" text NOT NULL,
+	"salt" varchar(32) NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"is_email_verified" boolean DEFAULT false NOT NULL,
+	"email_verification_token" varchar(255),
+	"email_verification_expiry" timestamp,
+	"password_reset_token" varchar(255),
+	"password_reset_expiry" timestamp,
+	"last_login_at" timestamp,
+	"last_active_at" timestamp,
+	"settings" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "users_uuid_unique" UNIQUE("uuid"),
+	CONSTRAINT "users_email_unique" UNIQUE("email"),
+	CONSTRAINT "users_username_unique" UNIQUE("username")
+);
+--> statement-breakpoint
+ALTER TABLE "mail_accounts" ADD CONSTRAINT "mail_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mail_attachments" ADD CONSTRAINT "mail_attachments_mail_id_mails_id_fk" FOREIGN KEY ("mail_id") REFERENCES "public"."mails"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mail_folders" ADD CONSTRAINT "mail_folders_account_id_mail_accounts_id_fk" FOREIGN KEY ("account_id") REFERENCES "public"."mail_accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mail_label_relations" ADD CONSTRAINT "mail_label_relations_mail_id_mails_id_fk" FOREIGN KEY ("mail_id") REFERENCES "public"."mails"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -119,4 +146,6 @@ ALTER TABLE "mails" ADD CONSTRAINT "mails_account_id_mail_accounts_id_fk" FOREIG
 ALTER TABLE "mails" ADD CONSTRAINT "mails_folder_id_mail_folders_id_fk" FOREIGN KEY ("folder_id") REFERENCES "public"."mail_folders"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sync_status" ADD CONSTRAINT "sync_status_account_id_mail_accounts_id_fk" FOREIGN KEY ("account_id") REFERENCES "public"."mail_accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sync_status" ADD CONSTRAINT "sync_status_folder_id_mail_folders_id_fk" FOREIGN KEY ("folder_id") REFERENCES "public"."mail_folders"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "email_idx" ON "mail_accounts" USING btree ("email");
+CREATE UNIQUE INDEX "email_idx" ON "mail_accounts" USING btree ("email");--> statement-breakpoint
+CREATE UNIQUE INDEX "users_email_idx" ON "users" USING btree ("email");--> statement-breakpoint
+CREATE UNIQUE INDEX "users_username_idx" ON "users" USING btree ("username");

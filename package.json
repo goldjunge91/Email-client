@@ -65,8 +65,16 @@
 		"version-bump": "node .erb/scripts/version-bump.js",
 		"version-bump:minor": "npx cross-env VERSION_BUMP=minor npm run version-bump",
 		"version-bump:major": "npx cross-env VERSION_BUMP=major npm run version-bump",
-		"version-bump:patch": "npx cross-env VERSION_BUMP=patch npm run version-bump"
-	},
+		"version-bump:patch": "npx cross-env VERSION_BUMP=patch npm run version-bump",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "tsx src/main/database/migrate.ts",
+		"db:studio": "drizzle-kit studio",
+		"db:push": "drizzle-kit push",
+		"db:up": "docker-compose up -d",
+		"db:down": "docker-compose down",
+		"db:reset": "docker-compose down -v && docker-compose up -d postgres && npm run db:push",
+		"pgadmin": "docker-compose up -d pgadmin"
+		},
 	"browserslist": [
 		"extends browserslist-config-erb"
 	],

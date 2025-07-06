@@ -1,13 +1,14 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import { ipcMain } from 'electron';
+import { mailService } from './database/services/mailService';
+/* eslint-disable import/no-extraneous-dependencies */
 import { ImapClient } from '../core/mail/imapClient';
 import { SmtpClient } from '../core/mail/smtpClient';
 import { ruleEngine } from '../core/rules/ruleEngine';
-import { mailService } from '../core/mail/mailService';
+// import { mailService } from '../database/services/mailService';
 import { MailAccount, MailRule } from '../types/mail';
 
 // Import windows from the main process
-import windows from './windows';
+// import windows from './windows';
 
 // Store active IMAP/SMTP clients
 const imapClients = new Map<string, ImapClient>();
@@ -344,36 +345,36 @@ export const initializeMailIpc = () => {
 		}
 	});
 
-	// Mail Service Event Forwarding
-	mailService.on('account:added', (account) => {
-		windows.mainWindow?.webContents.send('mail:account-added', account);
-	});
+	// // Mail Service Event Forwarding
+	// mailService.on('account:added', (account) => {
+	// 	windows.mainWindow?.webContents.send('mail:account-added', account);
+	// });
 
-	mailService.on('account:removed', (accountId) => {
-		windows.mainWindow?.webContents.send('mail:account-removed', accountId);
-	});
+	// mailService.on('account:removed', (accountId) => {
+	// 	windows.mainWindow?.webContents.send('mail:account-removed', accountId);
+	// });
 
-	mailService.on('sync:started', (accountId) => {
-		windows.mainWindow?.webContents.send('mail:sync-started', accountId);
-	});
+	// mailService.on('sync:started', (accountId) => {
+	// 	windows.mainWindow?.webContents.send('mail:sync-started', accountId);
+	// });
 
-	mailService.on('sync:progress', (progress) => {
-		windows.mainWindow?.webContents.send('mail:sync-progress', progress);
-	});
+	// mailService.on('sync:progress', (progress) => {
+	// 	windows.mainWindow?.webContents.send('mail:sync-progress', progress);
+	// });
 
-	mailService.on('sync:completed', (accountId) => {
-		windows.mainWindow?.webContents.send('mail:sync-completed', accountId);
-	});
+	// mailService.on('sync:completed', (accountId) => {
+	// 	windows.mainWindow?.webContents.send('mail:sync-completed', accountId);
+	// });
 
-	mailService.on('mails:added', (mails) => {
-		windows.mainWindow?.webContents.send('mail:mails-added', mails);
-	});
+	// mailService.on('mails:added', (mails) => {
+	// 	windows.mainWindow?.webContents.send('mail:mails-added', mails);
+	// });
 
-	mailService.on('mails:updated', (mailIds) => {
-		windows.mainWindow?.webContents.send('mail:mails-updated', mailIds);
-	});
+	// mailService.on('mails:updated', (mailIds) => {
+	// 	windows.mainWindow?.webContents.send('mail:mails-updated', mailIds);
+	// });
 
-	mailService.on('error', (error) => {
-		windows.mainWindow?.webContents.send('mail:error', error);
-	});
+	// mailService.on('error', (error) => {
+	// 	windows.mainWindow?.webContents.send('mail:error', error);
+	// });
 };
