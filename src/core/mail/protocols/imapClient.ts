@@ -1,13 +1,12 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { EventEmitter } from 'events';
 import Imap from 'node-imap';
 import { simpleParser, ParsedMail } from 'mailparser';
-import { v4 as uuidv4 } from 'uuid';
 import {
 	Mail,
 	MailFolder,
-	MailAccount,
+	// MailAccount, // Not used in this file
 	MailAddress,
 	MailAttachment,
 } from '../../types/mail';
@@ -25,11 +24,9 @@ export interface ImapConnectionOptions {
 export class ImapClient extends EventEmitter {
 	private imap: Imap | null = null;
 
-	private accountId: string;
+	private readonly accountId: string;
 
 	private isConnected: boolean = false;
-
-	private syncInProgress: boolean = false;
 
 	constructor(accountId: string) {
 		super();
@@ -107,15 +104,18 @@ export class ImapClient extends EventEmitter {
 		parent = '',
 		folders: MailFolder[] = [],
 	): MailFolder[] {
-		for (const [name, box] of Object.entries<any>(boxes)) {
+		Object.entries<any>(boxes).forEach(([name, box]) => {
 			const fullPath = parent ? `${parent}${box.delimiter}${name}` : name;
 
 			const folder: MailFolder = {
-				id: uuidv4(),
+				id: fullPath, // Use the full path as a stable ID
 				accountId: this.accountId,
 				name,
 				path: fullPath,
-				type: this.getFolderType(name, box),
+				type: ImapClient.getFolderType(name, box),
+				// NOTE: The getBoxes() method does not provide message counts.
+				// This information must be fetched with openFolder() or status() for
+				// a specific folder.
 				unreadCount: 0,
 				totalCount: 0,
 				syncState: {
@@ -132,22 +132,23 @@ export class ImapClient extends EventEmitter {
 			if (box.children) {
 				this.parseBoxes(box.children, fullPath, folders);
 			}
-		}
+		});
 
 		return folders;
 	}
 
-	private getFolderType(name: string, box: any): MailFolder['type'] {
+	private static getFolderType(name: string, box: any): MailFolder['type'] {
 		const lowerName = name.toLowerCase();
 
-		if (box.special_use_attrib) {
-			if (box.special_use_attrib.includes('\\Inbox')) return 'inbox';
-			if (box.special_use_attrib.includes('\\Sent')) return 'sent';
-			if (box.special_use_attrib.includes('\\Drafts')) return 'drafts';
-			if (box.special_use_attrib.includes('\\Trash')) return 'trash';
-			if (box.special_use_attrib.includes('\\Junk')) return 'spam';
-			if (box.special_use_attrib.includes('\\Archive')) return 'archive';
-			if (box.special_use_attrib.includes('\\All')) return 'all';
+		// Check for special-use attributes first (RFC 6154)
+		if (box.attribs) {
+			if (box.attribs.includes('\\Inbox')) return 'inbox';
+			if (box.attribs.includes('\\Sent')) return 'sent';
+			if (box.attribs.includes('\\Drafts')) return 'drafts';
+			if (box.attribs.includes('\\Trash')) return 'trash';
+			if (box.attribs.includes('\\Junk')) return 'spam';
+			if (box.attribs.includes('\\Archive')) return 'archive';
+			if (box.attribs.includes('\\All')) return 'all';
 		}
 
 		// Fallback to name-based detection
@@ -190,7 +191,7 @@ export class ImapClient extends EventEmitter {
 			searchCriteria?: any[];
 		} = {},
 	): Promise<Mail[]> {
-		const box = await this.openFolder(folderPath, true);
+		await this.openFolder(folderPath, true);
 
 		return new Promise((resolve, reject) => {
 			if (!this.imap) {
@@ -199,12 +200,11 @@ export class ImapClient extends EventEmitter {
 			}
 
 			// Build search criteria
-			let searchCriteria = options.searchCriteria || ['ALL'];
-			if (options.since) {
-				searchCriteria = ['SINCE', options.since];
-			}
+			const searchCriteria =
+				options.searchCriteria ||
+				(options.since ? ['SINCE', options.since] : ['ALL']);
 
-			this.imap.search(searchCriteria, (err, uids) => {
+			this.imap.search(searchCriteria, (err, uids: number[]) => {
 				if (err) {
 					reject(err);
 					return;
@@ -216,113 +216,144 @@ export class ImapClient extends EventEmitter {
 				}
 
 				// Apply pagination
-				let fetchUids = uids;
-				if (options.offset !== undefined || options.limit !== undefined) {
-					const start = options.offset || 0;
-					const end = options.limit ? start + options.limit : uids.length;
-					fetchUids = uids.slice(start, end);
-				}
+				const uidsToFetch = ImapClient.paginateUids(
+					uids,
+					options.limit,
+					options.offset,
+				);
 
 				const mails: Mail[] = [];
-				const fetch = this.imap!.fetch(fetchUids, {
+				if (uidsToFetch.length === 0) {
+					resolve(mails);
+					return;
+				}
+
+				const fetch = this.imap!.fetch(uidsToFetch, {
 					bodies: '',
 					struct: true,
-					envelope: true,
 				});
 
-				fetch.on('message', (msg, seqno) => {
-					let rawMail = '';
+				fetch.on('message', (msg) => {
+					let attributes: any;
+					const chunks: Buffer[] = [];
+
+					msg.once('attributes', (attrs) => {
+						attributes = attrs;
+					});
 
 					msg.on('body', (stream) => {
 						stream.on('data', (chunk) => {
-							rawMail += chunk.toString();
+							chunks.push(chunk as Buffer);
 						});
-					});
-
-					msg.once('attributes', async (attrs) => {
-						try {
-							const parsed = await simpleParser(rawMail);
-							const mail = this.convertParsedMail(parsed, attrs, folderPath);
-							mails.push(mail);
-						} catch (error) {
-							console.error('Error parsing mail:', error);
-						}
+						stream.once('end', async () => {
+							const rawMailBuffer = Buffer.concat(chunks);
+							try {
+								const parsed = await simpleParser(rawMailBuffer);
+								const mail = this.convertParsedMail(
+									parsed,
+									attributes,
+									folderPath,
+									rawMailBuffer.toString('utf-8'),
+								);
+								mails.push(mail);
+							} catch (error) {
+								// Log parsing errors but don't reject the whole batch
+								console.error(
+									`Error parsing mail UID ${attributes.uid}:`,
+									error,
+								);
+							}
+						});
 					});
 				});
 
 				fetch.once('error', reject);
-				fetch.once('end', () => resolve(mails));
+				fetch.once('end', () => {
+					// Sort mails by UID descending (most recent first)
+					mails.sort((a, b) => (b.uid || 0) - (a.uid || 0));
+					resolve(mails);
+				});
 			});
 		});
 	}
 
 	private convertParsedMail(
 		parsed: ParsedMail,
-		attrs: any,
+		attrs: { uid: number; flags: string[]; date: Date; size: number },
 		folderPath: string,
+		raw: string,
 	): Mail {
 		const mail: Mail = {
-			id: uuidv4(),
+			id: `${this.accountId}:${folderPath}:${attrs.uid}`, // Stable ID
+			uid: attrs.uid,
 			accountId: this.accountId,
 			messageId: parsed.messageId || '',
-			threadId: parsed.inReplyTo || parsed.messageId || '',
+			threadId:
+				parsed.inReplyTo || parsed.references?.[0] || parsed.messageId || '',
 			folderId: folderPath,
 			subject: parsed.subject || '(No Subject)',
-			from: this.parseAddresses(parsed.from),
-			to: this.parseAddresses(parsed.to),
-			cc: this.parseAddresses(parsed.cc),
-			bcc: this.parseAddresses(parsed.bcc),
-			replyTo: this.parseAddresses(parsed.replyTo),
+			from: ImapClient.parseAddresses(parsed.from),
+			to: ImapClient.parseAddresses(parsed.to),
+			cc: ImapClient.parseAddresses(parsed.cc),
+			bcc: ImapClient.parseAddresses(parsed.bcc),
+			replyTo: ImapClient.parseAddresses(parsed.replyTo),
 			date: parsed.date || new Date(),
 			receivedDate: attrs.date || new Date(),
-			htmlBody: parsed.html || '',
-			textBody: parsed.text || '',
-			snippet: this.generateSnippet(parsed.text || parsed.html || ''),
-			attachments: this.parseAttachments(parsed.attachments),
+			htmlBody: typeof parsed.html === 'string' ? parsed.html : '',
+			textBody: parsed.text || parsed.textAsHtml || '',
+			snippet: ImapClient.generateSnippet(parsed.text || parsed.html || ''),
+			attachments: ImapClient.parseAttachments(parsed.attachments),
 			labels: [],
 			isRead: attrs.flags?.includes('\\Seen') || false,
-			isStarred: attrs.flags?.includes('\\Flagged') || false,
+			isFlagged: attrs.flags?.includes('\\Flagged') || false,
 			isImportant: false,
 			isDraft: attrs.flags?.includes('\\Draft') || false,
 			isDeleted: attrs.flags?.includes('\\Deleted') || false,
 			hasAttachments: (parsed.attachments?.length || 0) > 0,
 			size: attrs.size || 0,
-			headers: this.parseHeaders(parsed.headers),
-			raw: rawMail,
+			headers: ImapClient.parseHeaders(parsed.headers),
+			raw,
 		};
 
 		return mail;
 	}
 
-	private parseAddresses(addresses?: ParsedMail['from']): MailAddress[] {
+	private static parseAddresses(
+		addresses?: ParsedMail['from'] | ParsedMail['to'],
+	): MailAddress[] {
 		if (!addresses) return [];
 
-		const addressArray = Array.isArray(addresses) ? addresses : [addresses];
+		const addressArray = 'value' in addresses ? addresses.value : addresses;
+		const result: MailAddress[] = [];
 
-		return addressArray.map((addr) => ({
-			name: addr.value?.[0]?.name || '',
-			address: addr.value?.[0]?.address || '',
-		}));
+		addressArray.forEach((addr) => {
+			if ('address' in addr && addr.address) {
+				result.push({ name: addr.name, address: addr.address });
+			} else if ('group' in addr) {
+				result.push(...ImapClient.parseAddresses(addr.group));
+			}
+		});
+		return result;
 	}
 
-	private parseAttachments(
+	private static parseAttachments(
 		attachments?: ParsedMail['attachments'],
 	): MailAttachment[] {
 		if (!attachments) return [];
 
 		return attachments.map((att) => ({
-			id: uuidv4(),
+			id: att.checksum || att.contentId || att.filename || 'unknown-attachment',
 			filename: att.filename || 'attachment',
 			contentType: att.contentType || 'application/octet-stream',
 			size: att.size || 0,
 			contentId: att.contentId,
 			contentDisposition: att.contentDisposition,
-			checksum: att.checksum,
+			content: att.content,
 			related: att.related || false,
 		}));
 	}
 
-	private parseHeaders(
+	private static parseHeaders(
 		headers?: ParsedMail['headers'],
 	): Record<string, string> {
 		const result: Record<string, string> = {};
@@ -336,13 +367,24 @@ export class ImapClient extends EventEmitter {
 		return result;
 	}
 
-	private generateSnippet(content: string): string {
+	private static generateSnippet(content: string): string {
+		if (!content) return '';
 		// Remove HTML tags
 		const text = content.replace(/<[^>]*>/g, '');
 		// Remove extra whitespace
 		const cleaned = text.replace(/\s+/g, ' ').trim();
 		// Return first 200 characters
-		return cleaned.substring(0, 200) + (cleaned.length > 200 ? '...' : '');
+		return cleaned.substring(0, 200);
+	}
+
+	private static paginateUids(
+		uids: number[],
+		limit?: number,
+		offset?: number,
+	): number[] {
+		const start = offset || 0;
+		const end = limit ? start + limit : uids.length;
+		return uids.slice(start, end);
 	}
 
 	// Mail Actions
@@ -361,14 +403,14 @@ export class ImapClient extends EventEmitter {
 		});
 	}
 
-	async markAsStarred(uid: number, starred = true): Promise<void> {
+	async markAsFlagged(uid: number, flagged = true): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (!this.imap) {
 				reject(new Error('Not connected'));
 				return;
 			}
 
-			const flag = starred ? '\\Flagged' : '-\\Flagged';
+			const flag = flagged ? '\\Flagged' : '-\\Flagged';
 			this.imap.addFlags(uid, flag, (err) => {
 				if (err) reject(err);
 				else resolve();
@@ -404,8 +446,8 @@ export class ImapClient extends EventEmitter {
 				}
 
 				if (expunge) {
-					this.imap!.expunge((err) => {
-						if (err) reject(err);
+					this.imap!.expunge((expungeErr) => {
+						if (expungeErr) reject(expungeErr);
 						else resolve();
 					});
 				} else {
@@ -438,7 +480,7 @@ export class ImapClient extends EventEmitter {
 		modifiedMails: Mail[];
 		deletedUids: number[];
 	}> {
-		const box = await this.openFolder(folder.path, true);
+		await this.openFolder(folder.path, true);
 
 		// This is a simplified sync implementation
 		// In production, you'd want to use UIDVALIDITY, UIDNEXT, and MODSEQ
@@ -453,158 +495,6 @@ export class ImapClient extends EventEmitter {
 			modifiedMails: [],
 			deletedUids: [],
 		};
-	}
-
-	/**
-	 * E-Mails mit Datenbank-Integration abrufen
-	 */
-	async fetchEmailsToDatabase(
-		folderPath: string,
-		folderId: number,
-		limit = 50,
-		sinceUid?: number,
-	): Promise<Mail[]> {
-		await this.openBox(folderPath);
-
-		return new Promise((resolve, reject) => {
-			if (!this.imap) {
-				reject(new Error('IMAP-Verbindung nicht hergestellt'));
-				return;
-			}
-
-			// Suchkriterien definieren
-			let searchCriteria: (string | string[])[] = ['ALL'];
-			if (sinceUid) {
-				searchCriteria = [['UID', `${sinceUid}:*`]];
-			}
-
-			this.imap.search(searchCriteria, (err, results) => {
-				if (err) {
-					reject(err);
-					return;
-				}
-
-				if (!results || results.length === 0) {
-					resolve([]);
-					return;
-				}
-
-				// Begrenzen auf die letzten N E-Mails
-				const limitedResults = results.slice(-limit);
-
-				const messages: Mail[] = [];
-				const f = this.imap!.fetch(limitedResults, {
-					bodies: '',
-					struct: true,
-					envelope: true,
-				});
-
-				f.on('message', (msg, seqno) => {
-					let buffer = '';
-					let envelope: any;
-					let uid: number;
-
-					msg.on('body', (stream) => {
-						stream.on('data', (chunk) => {
-							buffer += chunk.toString('utf8');
-						});
-					});
-
-					msg.once('attributes', (attrs) => {
-						envelope = attrs.envelope;
-						uid = attrs.uid;
-					});
-
-					msg.once('end', async () => {
-						try {
-							// E-Mail parsen
-							const parsed = await simpleParser(buffer);
-
-							// Mail-Objekt erstellen
-							const mail: Mail = {
-								id: 0, // Wird von der Datenbank gesetzt
-								account_id: parseInt(this.accountId),
-								folder_id: folderId,
-								uid,
-								message_id: parsed.messageId || '',
-								thread_id: parsed.references?.[0] || null,
-								subject: parsed.subject || '',
-								from: this.parseAddresses(parsed.from),
-								to: this.parseAddresses(parsed.to),
-								cc: this.parseAddresses(parsed.cc),
-								bcc: this.parseAddresses(parsed.bcc),
-								reply_to: this.parseAddresses(parsed.replyTo),
-								text_content: parsed.text || null,
-								html_content: parsed.html || null,
-								snippet: this.generateSnippet(parsed.text || parsed.html || ''),
-								date: parsed.date || envelope.date || new Date(),
-								received_date: new Date(),
-								size: buffer.length,
-								is_read: false,
-								is_starred: false,
-								is_flagged: false,
-								is_answered: false,
-								is_draft: false,
-								is_deleted: false,
-								has_attachments: (parsed.attachments?.length || 0) > 0,
-								attachment_count: parsed.attachments?.length || 0,
-								created_at: new Date(),
-								updated_at: new Date(),
-							};
-
-							messages.push(mail);
-						} catch (parseError) {
-							console.error('Fehler beim Parsen der E-Mail:', parseError);
-						}
-					});
-				});
-
-				f.once('error', (fetchError) => {
-					reject(fetchError);
-				});
-
-				f.once('end', () => {
-					resolve(messages);
-				});
-			});
-		});
-	}
-
-	/**
-	 * E-Mail-Adressen parsen
-	 */
-	private parseAddresses(addresses: any): any[] {
-		if (!addresses) return [];
-
-		if (Array.isArray(addresses)) {
-			return addresses.map((addr) => ({
-				name: addr.name || '',
-				address: addr.address || '',
-			}));
-		}
-
-		if (typeof addresses === 'object' && addresses.address) {
-			return [
-				{
-					name: addresses.name || '',
-					address: addresses.address,
-				},
-			];
-		}
-
-		return [];
-	}
-
-	/**
-	 * Snippet für E-Mail-Vorschau generieren
-	 */
-	private generateSnippet(content: string, maxLength = 150): string {
-		// HTML-Tags entfernen und Text kürzen
-		const plainText = content.replace(/<[^>]*>/g, '').trim();
-		if (plainText.length <= maxLength) {
-			return plainText;
-		}
-		return `${plainText.substring(0, maxLength)}...`;
 	}
 
 	// Utility
@@ -635,9 +525,7 @@ export const verifyImapConnection = async (account: {
 			port: account.port,
 			tls: account.ssl,
 		});
-
+	} finally {
 		client.disconnect();
-	} catch (error) {
-		throw error;
 	}
 };

@@ -1,5 +1,5 @@
 import { ElectronHandler } from '@/main/preload';
-import type { Account } from '@/core/mail/imapClient';
+import Account from '@/types/mail';
 
 declare global {
 	interface Window {

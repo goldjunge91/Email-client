@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import { ipcMain } from 'electron';
 import { EncryptionService } from '../encryption';
 

@@ -13,7 +13,7 @@ async function runMigrations() {
 		}
 
 		// Führe Migrationen aus
-		await migrate(db, { migrationsFolder: './src/database/migrations' });
+		await migrate(db, { migrationsFolder: './src/main/database/migrations' });
 
 		console.log('✅ Alle Migrationen erfolgreich ausgeführt');
 	} catch (error) {

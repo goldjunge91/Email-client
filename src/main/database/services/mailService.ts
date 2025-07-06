@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import { eq, desc, and } from 'drizzle-orm';
 
 import type { MailAccount, MailFolder, Mail, SyncStatus } from '@/types/mail';

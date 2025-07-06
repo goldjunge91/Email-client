@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-console */
 import { eq, or } from 'drizzle-orm';
 import { randomBytes, pbkdf2Sync } from 'crypto';
