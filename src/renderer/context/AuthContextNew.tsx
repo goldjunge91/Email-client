@@ -64,6 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 						'auth:get-user',
 						userData.id,
 					);
+					console.log(window.electronAPI);
 					if (result.success) {
 						setUser(result.user);
 					} else {

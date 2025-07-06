@@ -1,11 +1,17 @@
 import { Layout } from '@/renderer/components/layout/Layout';
 import MailApp from '@/renderer/components/windows/mail/MailApp';
 import { createRoot } from 'react-dom/client';
+import { AuthProvider } from './context/AuthContextNew';
+import { MailStoreProvider } from './context/MailStoreProvider';
 
 const container = document.getElementById('root') as HTMLElement;
 const root = createRoot(container);
 root.render(
-	<Layout>
-		<MailApp />
-	</Layout>,
+	<AuthProvider>
+		<MailStoreProvider>
+			<Layout>
+				<MailApp />
+			</Layout>
+		</MailStoreProvider>
+	</AuthProvider>,
 );

@@ -5,7 +5,7 @@ import { PROTOCOL } from '@/config/config';
 import { nav } from '@/renderer/config/nav';
 import { useGlobalContext } from '@/renderer/context/global-context';
 import { useMailStoreContext } from '@/renderer/context/MailStoreProvider';
-import { MailStoreTestComponent } from '@/renderer/components/debug/MailStoreTestComponent';
+// import { MailStoreTestComponent } from '@/renderer/components/debug/MailStoreTestComponent';
 import styles from '@/renderer/styles/CssModuleExample.module.scss';
 import { Link } from 'react-router-dom';
 import { InputComboboxForm } from '../input/InputComboboxForm';
@@ -49,7 +49,6 @@ export function Home() {
 						</ul>
 					</CardContent>
 				</Card>
-
 				<Card className="w-full max-w-md">
 					<CardHeader>
 						<CardTitle>Quick Settings</CardTitle>
@@ -75,7 +74,9 @@ export function Home() {
 							onClick={async () => {
 								try {
 									await window.electron.window.openMail();
+									console.log(window.electronAPI);
 								} catch {
+									console.console.error('Failed to open mail app');
 									// Failed to open mail app
 								}
 							}}
@@ -92,7 +93,6 @@ export function Home() {
 						</Button>
 					</CardContent>
 				</Card>
-
 				<Card className="w-full max-w-md">
 					<CardHeader>
 						<CardTitle>Mail Store Status</CardTitle>
@@ -104,11 +104,10 @@ export function Home() {
 						<p>Syncing: {store.isSyncing ? 'Yes' : 'No'}</p>
 					</CardContent>
 				</Card>
-
 				{/* Detaillierte Mail Store Test Komponente */}
-				<div className="w-full">
+				{/* <div className="w-full">
 					<MailStoreTestComponent />
-				</div>
+				</div> */}
 			</div>
 		</div>
 	);

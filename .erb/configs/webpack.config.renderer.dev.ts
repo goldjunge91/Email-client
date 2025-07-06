@@ -72,6 +72,10 @@ const configuration: webpack.Configuration = {
 	module: {
 		rules: [
 			{
+				test: /\.d\.mts$/,
+				use: 'null-loader',
+			},
+			{
 				test: /\.s?(c|a)ss$/,
 				use: [
 					'style-loader',

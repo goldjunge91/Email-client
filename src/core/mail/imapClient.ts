@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EventEmitter } from 'events';
@@ -107,13 +108,13 @@ export class ImapClient extends EventEmitter {
 		parent = '',
 		folders: MailFolder[] = [],
 	): MailFolder[] {
-		for (const [name, box] of Object.entries<any>(boxes)) {
-			const fullPath = parent ? `${parent}${box.delimiter}${name}` : name;
+		Object.entries<any>(boxes).forEach(([name, box]) => {
+			const fullPath = parent ? `${parent}${box.delimiter}${name}` : name; // eslint-disable-line @typescript-eslint/no-shadow
 
 			const folder: MailFolder = {
 				id: uuidv4(),
 				accountId: this.accountId,
-				name,
+				name, // eslint-disable-line @typescript-eslint/no-shadow
 				path: fullPath,
 				type: this.getFolderType(name, box),
 				unreadCount: 0,
@@ -130,14 +131,14 @@ export class ImapClient extends EventEmitter {
 
 			// Recursively parse children
 			if (box.children) {
-				this.parseBoxes(box.children, fullPath, folders);
+				this.parseBoxes(box.children, fullPath, folders); // eslint-disable-line @typescript-eslint/no-shadow
 			}
-		}
+		});
 
 		return folders;
 	}
 
-	private getFolderType(name: string, box: any): MailFolder['type'] {
+	private static getFolderType(name: string, box: any): MailFolder['type'] {
 		const lowerName = name.toLowerCase();
 
 		if (box.special_use_attrib) {
@@ -288,24 +289,25 @@ export class ImapClient extends EventEmitter {
 			hasAttachments: (parsed.attachments?.length || 0) > 0,
 			size: attrs.size || 0,
 			headers: this.parseHeaders(parsed.headers),
+			// eslint-disable-next-line no-undef
 			raw: rawMail,
 		};
 
 		return mail;
 	}
 
-	private parseAddresses(addresses?: ParsedMail['from']): MailAddress[] {
+	private static parseAddresses(addresses?: ParsedMail['from']): MailAddress[] {
 		if (!addresses) return [];
 
 		const addressArray = Array.isArray(addresses) ? addresses : [addresses];
 
 		return addressArray.map((addr) => ({
-			name: addr.value?.[0]?.name || '',
-			address: addr.value?.[0]?.address || '',
+			name: addr.value?.[0]?.name ?? '',
+			address: addr.value?.[0]?.address ?? '',
 		}));
 	}
 
-	private parseAttachments(
+	private static parseAttachments(
 		attachments?: ParsedMail['attachments'],
 	): MailAttachment[] {
 		if (!attachments) return [];
@@ -322,7 +324,7 @@ export class ImapClient extends EventEmitter {
 		}));
 	}
 
-	private parseHeaders(
+	private static parseHeaders(
 		headers?: ParsedMail['headers'],
 	): Record<string, string> {
 		const result: Record<string, string> = {};
@@ -336,7 +338,7 @@ export class ImapClient extends EventEmitter {
 		return result;
 	}
 
-	private generateSnippet(content: string): string {
+	private static generateSnippet(content: string): string {
 		// Remove HTML tags
 		const text = content.replace(/<[^>]*>/g, '');
 		// Remove extra whitespace
@@ -404,7 +406,7 @@ export class ImapClient extends EventEmitter {
 				}
 
 				if (expunge) {
-					this.imap!.expunge((err) => {
+					this.imap!.expunge((err2: Error) => {
 						if (err) reject(err);
 						else resolve();
 					});
@@ -461,8 +463,8 @@ export class ImapClient extends EventEmitter {
 	async fetchEmailsToDatabase(
 		folderPath: string,
 		folderId: number,
-		limit = 50,
 		sinceUid?: number,
+		limit = 50,
 	): Promise<Mail[]> {
 		await this.openBox(folderPath);
 
@@ -523,7 +525,7 @@ export class ImapClient extends EventEmitter {
 							// Mail-Objekt erstellen
 							const mail: Mail = {
 								id: 0, // Wird von der Datenbank gesetzt
-								account_id: parseInt(this.accountId),
+								account_id: parseInt(this.accountId, 10),
 								folder_id: folderId,
 								uid,
 								message_id: parsed.messageId || '',
@@ -571,9 +573,9 @@ export class ImapClient extends EventEmitter {
 	}
 
 	/**
-	 * E-Mail-Adressen parsen
+	 * Parse email addresses
 	 */
-	private parseAddresses(addresses: any): any[] {
+	private static parseMailAddresses(addresses: any): any[] {
 		if (!addresses) return [];
 
 		if (Array.isArray(addresses)) {
@@ -593,18 +595,6 @@ export class ImapClient extends EventEmitter {
 		}
 
 		return [];
-	}
-
-	/**
-	 * Snippet für E-Mail-Vorschau generieren
-	 */
-	private generateSnippet(content: string, maxLength = 150): string {
-		// HTML-Tags entfernen und Text kürzen
-		const plainText = content.replace(/<[^>]*>/g, '').trim();
-		if (plainText.length <= maxLength) {
-			return plainText;
-		}
-		return `${plainText.substring(0, maxLength)}...`;
 	}
 
 	// Utility
@@ -636,8 +626,8 @@ export const verifyImapConnection = async (account: {
 			tls: account.ssl,
 		});
 
-		client.disconnect();
-	} catch (error) {
-		throw error;
+		client.disconnect(); // Always disconnect after verification
+	} finally {
+		/* empty */
 	}
 };

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import { EventEmitter } from 'events';

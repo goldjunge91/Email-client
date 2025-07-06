@@ -20,17 +20,16 @@ import {
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
 import windows from './windows';
-// import { verifyImapConnection, Account } from './core/mail/imapClient';
-import { verifyImapConnection } from '../core/mail/imapClient';
 import { initializeAuthIPC } from './ipc/auth';
-import { initializeMailIPC } from './ipc/mail';
+import { verifyImapConnection } from '../core/mail/imapClient';
 import { initializeEncryptionIPC } from './ipc/encryption';
+import { initializeMailIpc } from './mail-ipc';
 
 export default {
 	initialize() {
 		// Initialize all IPC handlers
 		initializeAuthIPC();
-		initializeMailIPC();
+		initializeMailIpc();
 		initializeEncryptionIPC();
 
 		// Activate the idle state when the renderer process is ready

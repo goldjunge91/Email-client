@@ -7,5 +7,6 @@ const root = createRoot(container);
 root.render(
 	<Layout>
 		<App />
+		console.log({(user, isInitialized)})
 	</Layout>,
 );

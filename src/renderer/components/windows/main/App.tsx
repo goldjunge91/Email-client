@@ -32,10 +32,10 @@ export default function App() {
 		);
 	}
 
-	// Show auth modal if user is not logged in
-	if (!user) {
-		return <AuthModal />;
-	}
+	// // Show auth modal if user is not logged in
+	// if (!user) {
+	// 	return <AuthModal />;
+	// }
 
 	const index =
 		settingsNavItems.find((item) => item.index) || settingsNavItems[0];
