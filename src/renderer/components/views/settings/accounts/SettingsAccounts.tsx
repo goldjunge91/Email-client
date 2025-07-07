@@ -9,7 +9,8 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MailAccount } from '@/types/mail';
-import AccountForm from '@/ui/accounts/AccountForm';
+// import AccountForm from '@/ui/accounts/AccountForm';
+import ModernAccountForm from '@/ui/accounts/ModernAccountForm';
 import { Trash2 } from 'lucide-react';
 
 export function SettingsAccounts() {
@@ -50,7 +51,8 @@ export function SettingsAccounts() {
 			</CardHeader>
 			<CardContent>
 				<h2 className="text-lg font-semibold mb-4">Konto hinzufügen</h2>
-				<AccountForm onSuccess={fetchAccounts} />
+				{/* <AccountForm onSuccess={fetchAccounts} /> */}
+				<ModernAccountForm onSuccess={fetchAccounts} />
 
 				<h2 className="text-lg font-semibold mt-8 mb-4">Verwaltete Konten</h2>
 				{accounts.length === 0 ? (

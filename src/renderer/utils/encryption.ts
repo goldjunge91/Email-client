@@ -30,7 +30,7 @@ export class EncryptionService {
 	 * Encrypt a string value using the main process
 	 */
 	static async encrypt(text: string): Promise<string> {
-		const result = await window.electronAPI.invoke('crypto:encrypt', text);
+		const result = await window.electron.invoke('crypto:encrypt', text);
 		if (result.success) {
 			return result.encrypted;
 		}
@@ -41,7 +41,7 @@ export class EncryptionService {
 	 * Decrypt a string value using the main process
 	 */
 	static async decrypt(encryptedText: string): Promise<string> {
-		const result = await window.electronAPI.invoke(
+		const result = await window.electron.invoke(
 			'crypto:decrypt',
 			encryptedText,
 		);
@@ -55,7 +55,7 @@ export class EncryptionService {
 	 * Check if a string appears to be encrypted
 	 */
 	static async isEncrypted(text: string): Promise<boolean> {
-		const result = await window.electronAPI.invoke('crypto:is-encrypted', text);
+		const result = await window.electron.invoke('crypto:is-encrypted', text);
 		if (result.success) {
 			return result.isEncrypted;
 		}

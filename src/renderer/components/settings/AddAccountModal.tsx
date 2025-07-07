@@ -21,6 +21,7 @@ import { Alert, AlertDescription } from '@/renderer/components/ui/alert';
 import { Loader2, AlertCircle } from 'lucide-react';
 import type { MailAccount } from '@/renderer/utils/mailService';
 import { mailService } from '@/renderer/utils/mailService';
+import { toast } from 'sonner';
 
 interface AccountFormData {
 	email: string;
@@ -96,6 +97,7 @@ export function AddAccountModal({
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [useAdvancedSettings, setUseAdvancedSettings] = useState(false);
+	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
 	const handleEmailChange = (email: string) => {
 		setFormData((prev) => ({ ...prev, email }));
@@ -162,12 +164,91 @@ export function AddAccountModal({
 		}
 	};
 
+	const handleGoogleAuth = async () => {
+		setIsGoogleLoading(true);
+		setError('');
+		try {
+			// 1. Google Authentifizierung im Main-Prozess
+			const result = await window.electron.invoke('google:authenticate');
+			if (!result.success)
+				throw new Error(result.error || 'Google Auth fehlgeschlagen');
+
+			const { tokens, userInfo } = result.data;
+			// 2. Google-Konto im Main-Prozess verknüpfen
+			const linkResult = await window.electron.invoke('google:link-account', {
+				userId: String(userId),
+				tokens,
+				userInfo,
+			});
+			if (!linkResult.success)
+				throw new Error(
+					linkResult.error || 'Google-Konto konnte nicht verknüpft werden',
+				);
+
+			toast({
+				title: 'Google-Konto hinzugefügt',
+				description: userInfo.email,
+				variant: 'success',
+			});
+			onAccountAdded?.({
+				id: 0, // Dummy, Liste wird ohnehin neu geladen
+				user_id: userId,
+				email: userInfo.email,
+				name: `Gmail - ${userInfo.email}`,
+				provider: 'gmail',
+				imap_host: 'imap.gmail.com',
+				imap_port: 993,
+				imap_security: 'ssl',
+				smtp_host: 'smtp.gmail.com',
+				smtp_port: 587,
+				smtp_security: 'tls',
+				password: '',
+				is_active: true,
+				created_at: new Date(),
+				updated_at: new Date(),
+			});
+			onOpenChange(false);
+		} catch (err) {
+			setError(
+				err instanceof Error
+					? err.message
+					: 'Google-Authentifizierung fehlgeschlagen',
+			);
+		} finally {
+			setIsGoogleLoading(false);
+		}
+	};
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-w-lg">
 				<DialogHeader>
 					<DialogTitle>Neues E-Mail-Konto hinzufügen</DialogTitle>
 				</DialogHeader>
+
+				{/* Google Auth Button */}
+				<div className="flex flex-col items-center mb-4">
+					<Button
+						onClick={handleGoogleAuth}
+						variant="outline"
+						className="w-full flex items-center justify-center"
+						disabled={isGoogleLoading}
+					>
+						{isGoogleLoading ? (
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						) : (
+							<img
+								src="/static/icons/google.svg"
+								alt="Google"
+								className="h-5 w-5 mr-2"
+							/>
+						)}
+						Mit Google anmelden
+					</Button>
+					<span className="text-xs text-muted-foreground mt-1">
+						Füge dein Gmail-Konto per OAuth hinzu
+					</span>
+				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					{error && (

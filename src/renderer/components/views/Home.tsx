@@ -69,12 +69,13 @@ export function Home() {
 							<Button className="w-full mb-2">Go to Settings</Button>
 						</Link>
 						<Button
+							type="button"
 							className="w-full mb-2"
 							variant="outline"
 							onClick={async () => {
 								try {
 									await window.electron.window.openMail();
-									console.log(window.electronAPI);
+									console.log('Window Mail open', window.electron);
 								} catch {
 									console.console.error('Failed to open mail app');
 									// Failed to open mail app
@@ -84,6 +85,7 @@ export function Home() {
 							Open Mail View
 						</Button>
 						<Button
+							type="button"
 							className="w-full"
 							onClick={() =>
 								window.electron.ipcRenderer.send('open-child-window')

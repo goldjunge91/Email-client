@@ -144,10 +144,7 @@ export class MailService {
 	static async createAccount(
 		account: Omit<MailAccount, 'id' | 'created_at' | 'updated_at'>,
 	): Promise<MailAccount> {
-		const result = await window.electronAPI.invoke(
-			'mail:create-account',
-			account,
-		);
+		const result = await window.electron.invoke('mail:create-account', account);
 		if (result.success) {
 			return result.account;
 		}
@@ -155,7 +152,7 @@ export class MailService {
 	}
 
 	static async getAccountsByUserId(userId: number): Promise<MailAccount[]> {
-		const result = await window.electronAPI.invoke(
+		const result = await window.electron.invoke(
 			'mail:get-accounts-by-user',
 			userId,
 		);
@@ -166,10 +163,7 @@ export class MailService {
 	}
 
 	static async getAccountById(id: number): Promise<MailAccount | null> {
-		const result = await window.electronAPI.invoke(
-			'mail:get-account-by-id',
-			id,
-		);
+		const result = await window.electron.invoke('mail:get-account-by-id', id);
 		if (result.success) {
 			return result.account;
 		}
@@ -180,7 +174,7 @@ export class MailService {
 		id: number,
 		updates: Partial<MailAccount>,
 	): Promise<MailAccount> {
-		const result = await window.electronAPI.invoke('mail:update-account', {
+		const result = await window.electron.invoke('mail:update-account', {
 			id,
 			updates,
 		});
@@ -191,7 +185,7 @@ export class MailService {
 	}
 
 	static async deleteAccount(id: number): Promise<void> {
-		const result = await window.electronAPI.invoke('mail:delete-account', id);
+		const result = await window.electron.invoke('mail:delete-account', id);
 		if (!result.success) {
 			throw new Error(result.error || 'Failed to delete account');
 		}
@@ -199,7 +193,7 @@ export class MailService {
 
 	// Folder Management
 	static async getFoldersByAccount(accountId: number): Promise<MailFolder[]> {
-		const result = await window.electronAPI.invoke(
+		const result = await window.electron.invoke(
 			'mail:get-folders-by-account',
 			accountId,
 		);
@@ -215,7 +209,7 @@ export class MailService {
 		limit = 50,
 		offset = 0,
 	): Promise<Mail[]> {
-		const result = await window.electronAPI.invoke('mail:get-mails-by-folder', {
+		const result = await window.electron.invoke('mail:get-mails-by-folder', {
 			folderId,
 			limit,
 			offset,
@@ -227,7 +221,7 @@ export class MailService {
 	}
 
 	static async getMailById(id: number): Promise<Mail | null> {
-		const result = await window.electronAPI.invoke('mail:get-mail-by-id', id);
+		const result = await window.electron.invoke('mail:get-mail-by-id', id);
 		if (result.success) {
 			return result.mail;
 		}
@@ -235,35 +229,35 @@ export class MailService {
 	}
 
 	static async markMailAsRead(id: number): Promise<void> {
-		const result = await window.electronAPI.invoke('mail:mark-as-read', id);
+		const result = await window.electron.invoke('mail:mark-as-read', id);
 		if (!result.success) {
 			throw new Error(result.error || 'Failed to mark mail as read');
 		}
 	}
 
 	static async markMailAsUnread(id: number): Promise<void> {
-		const result = await window.electronAPI.invoke('mail:mark-as-unread', id);
+		const result = await window.electron.invoke('mail:mark-as-unread', id);
 		if (!result.success) {
 			throw new Error(result.error || 'Failed to mark mail as unread');
 		}
 	}
 
 	static async flagMail(id: number): Promise<void> {
-		const result = await window.electronAPI.invoke('mail:flag-mail', id);
+		const result = await window.electron.invoke('mail:flag-mail', id);
 		if (!result.success) {
 			throw new Error(result.error || 'Failed to flag mail');
 		}
 	}
 
 	static async unflagMail(id: number): Promise<void> {
-		const result = await window.electronAPI.invoke('mail:unflag-mail', id);
+		const result = await window.electron.invoke('mail:unflag-mail', id);
 		if (!result.success) {
 			throw new Error(result.error || 'Failed to unflag mail');
 		}
 	}
 
 	static async deleteMail(id: number): Promise<void> {
-		const result = await window.electronAPI.invoke('mail:delete-mail', id);
+		const result = await window.electron.invoke('mail:delete-mail', id);
 		if (!result.success) {
 			throw new Error(result.error || 'Failed to delete mail');
 		}
@@ -274,7 +268,7 @@ export class MailService {
 		query: string,
 		limit = 50,
 	): Promise<Mail[]> {
-		const result = await window.electronAPI.invoke('mail:search-mails', {
+		const result = await window.electron.invoke('mail:search-mails', {
 			accountId,
 			query,
 			limit,
@@ -287,10 +281,7 @@ export class MailService {
 
 	// Sync operations
 	static async syncAccount(accountId: number): Promise<void> {
-		const result = await window.electronAPI.invoke(
-			'mail:sync-account',
-			accountId,
-		);
+		const result = await window.electron.invoke('mail:sync-account', accountId);
 		if (!result.success) {
 			throw new Error(result.error || 'Failed to sync account');
 		}

@@ -71,7 +71,12 @@ const googleAuthChannels = [
 ];
 
 // Erweitere die Kanalliste um alle Mail-Kanäle
-const allChannels = [...channels, ...mailChannels, ...authChannels, ...googleAuthChannels];
+const allChannels = [
+	...channels,
+	...mailChannels,
+	...authChannels,
+	...googleAuthChannels,
+];
 
 const electronHandler = {
 	os: getOS(),
@@ -242,7 +247,6 @@ const electronHandler = {
 		},
 	},
 };
-
 contextBridge.exposeInMainWorld('electron', electronHandler);
 
 export type ElectronHandler = typeof electronHandler;

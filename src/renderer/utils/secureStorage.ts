@@ -146,7 +146,7 @@ export class SecureStorage {
 	 * Encrypt a string value using the main process
 	 */
 	private static async encrypt(text: string): Promise<string> {
-		const result = await window.electronAPI.invoke('crypto:encrypt', text);
+		const result = await window.electron.invoke('crypto:encrypt', text);
 		if (result.success) {
 			return result.encrypted;
 		}
@@ -157,7 +157,7 @@ export class SecureStorage {
 	 * Decrypt a string value using the main process
 	 */
 	private static async decrypt(encryptedText: string): Promise<string> {
-		const result = await window.electronAPI.invoke(
+		const result = await window.electron.invoke(
 			'crypto:decrypt',
 			encryptedText,
 		);
@@ -171,7 +171,7 @@ export class SecureStorage {
 	 * Check if a string appears to be encrypted
 	 */
 	private static async isEncrypted(text: string): Promise<boolean> {
-		const result = await window.electronAPI.invoke('crypto:is-encrypted', text);
+		const result = await window.electron.invoke('crypto:is-encrypted', text);
 		if (result.success) {
 			return result.isEncrypted;
 		}

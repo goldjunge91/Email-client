@@ -159,7 +159,7 @@ export default function ModernAccountForm({
 
 			setVerificationStatus('success');
 			setVerificationMessage('Account successfully verified!');
-		} catch (error) {
+		} catch {
 			setVerificationStatus('error');
 			setVerificationMessage(
 				'Failed to verify account. Please check your settings.',
