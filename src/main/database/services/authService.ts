@@ -282,6 +282,9 @@ export class AuthService {
 		},
 	): Promise<AuthResult> {
 		try {
+			if (!profile) {
+				return { success: false, error: 'Kein Profil-Update angegeben' };
+			}
 			// Prüfen ob neuer Username bereits existiert
 			if (profile.username) {
 				const [existingUser] = await this.db

@@ -94,7 +94,7 @@ ipcMain.handle('app:get-version', (): string => {
 })
 
 // Renderer process
-const version = await window.electronAPI.invoke('app:get-version')
+const version = await window.electron.invoke('app:get-version')
 ```
 
 ### IPC Channel Naming

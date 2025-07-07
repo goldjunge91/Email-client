@@ -10,6 +10,8 @@ import {
 	uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { randomUUID } from 'crypto';
+// import { pgTable, varchar, text, timestamp } from 'drizzle-orm/pg-core';
+// import { users } from './schema';
 
 // Users Table
 export const users = pgTable(
@@ -255,7 +257,6 @@ export const sessions = pgTable('sessions', {
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
-
 // Sync Status Table für detailliertere Sync-Informationen
 export const syncStatus = pgTable('sync_status', {
 	id: serial('id').primaryKey(),
@@ -279,6 +280,23 @@ export const syncStatus = pgTable('sync_status', {
 	emailsUpdated: integer('emails_updated').default(0),
 
 	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Google OAuth providers table
+export const googleAuthProviders = pgTable('google_auth_providers', {
+	userId: varchar('user_id', { length: 36 })
+		.notNull()
+		.references(() => users.uuid, { onDelete: 'cascade' })
+		.primaryKey(),
+	googleId: varchar('google_id', { length: 255 }).notNull().unique(),
+	email: varchar('email', { length: 255 }).notNull(),
+	name: varchar('name', { length: 255 }),
+	picture: text('picture'),
+	accessToken: text('access_token').notNull(),
+	refreshToken: text('refresh_token').notNull(),
+	tokenExpiry: timestamp('token_expiry').notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // Export types für TypeScript
@@ -308,3 +326,7 @@ export type NewSession = typeof sessions.$inferInsert;
 
 export type SyncStatus = typeof syncStatus.$inferSelect;
 export type NewSyncStatus = typeof syncStatus.$inferInsert;
+
+// Google OAuth providers table
+export type GoogleAuthProvider = typeof googleAuthProviders.$inferSelect;
+export type NewGoogleAuthProvider = typeof googleAuthProviders.$inferInsert;
