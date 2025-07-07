@@ -74,7 +74,7 @@
 		"db:down": "docker-compose down",
 		"db:reset": "docker-compose down -v && docker-compose up -d postgres && npm run db:push",
 		"pgadmin": "docker-compose up -d pgadmin"
-		},
+	},
 	"browserslist": [
 		"extends browserslist-config-erb"
 	],
@@ -225,6 +225,7 @@
 		"css-loader": "^6.9.1",
 		"css-minimizer-webpack-plugin": "^7.0.0",
 		"detect-port": "^1.6.1",
+		"drizzle-kit": "^0.31.4",
 		"electron": "27.1.0",
 		"electron-builder": "^25.0.5",
 		"electron-devtools-installer": "^3.2.0",
@@ -405,7 +406,8 @@
 		"onlyBuiltDependencies": [
 			"core-js",
 			"core-js-pure",
-			"electron"
+			"electron",
+			"esbuild"
 		]
 	}
 }
