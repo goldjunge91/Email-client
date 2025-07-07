@@ -10,24 +10,7 @@ import React, {
 } from 'react';
 
 // Types for user data (no database imports in renderer)
-interface User {
-	id: number;
-	name: string;
-	email: string;
-	created_at: Date;
-	updated_at: Date;
-}
-
-interface LoginCredentials {
-	email: string;
-	password: string;
-}
-
-interface RegisterData {
-	name: string;
-	email: string;
-	password: string;
-}
+import type { User, LoginCredentials, RegisterData } from '@/types/auth';
 
 interface AuthContextType {
 	user: User | null;
@@ -60,7 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 				if (storedUser) {
 					const userData = JSON.parse(storedUser);
 					// Verify user is still valid with backend
-					const result = await window.electronAPI.invoke(
+					const result = await window.electron.ipcRenderer.invoke(
 						'auth:get-user',
 						userData.id,
 					);
@@ -84,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 	const login = useCallback(
 		async (credentials: LoginCredentials): Promise<User> => {
-			const result = await window.electronAPI.invoke('auth:login', credentials);
+			const result = await window.electron.ipcRenderer.invoke('auth:login', credentials);
 			if (result.success) {
 				setUser(result.user);
 				localStorage.setItem('user', JSON.stringify(result.user));
@@ -96,7 +79,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	);
 
 	const register = useCallback(async (data: RegisterData): Promise<User> => {
-		const result = await window.electronAPI.invoke('auth:register', data);
+		const result = await window.electron.ipcRenderer.invoke('auth:register', data);
 		if (result.success) {
 			setUser(result.user);
 			localStorage.setItem('user', JSON.stringify(result.user));
@@ -114,7 +97,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		async (data: Partial<User>): Promise<User> => {
 			if (!user) throw new Error('No user logged in');
 
-			const result = await window.electronAPI.invoke('auth:update-profile', {
+			const result = await window.electron.ipcRenderer.invoke('auth:update-profile', {
 				userId: user.id,
 				...data,
 			});
@@ -134,7 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		async (currentPassword: string, newPassword: string): Promise<void> => {
 			if (!user) throw new Error('No user logged in');
 
-			const result = await window.electronAPI.invoke('auth:change-password', {
+			const result = await window.electron.ipcRenderer.invoke('auth:change-password', {
 				userId: user.id,
 				currentPassword,
 				newPassword,

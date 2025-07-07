@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+import type { RegisterData, LoginCredentials } from '@/types/auth';
 import { authService } from '../database/services/authService';
 
 /**
@@ -13,12 +14,12 @@ import { authService } from '../database/services/authService';
  *
  * Öffentliche Methoden (IPC-Handler):
  *
- *   'auth:register' (userData: { name: string; email: string; password: string }):
+ *   'auth:register' (userData: RegisterData):
  *     Registriert einen neuen Benutzer.
- *     @param userData   Objekt mit name, email, password
+ *     @param userData   Objekt mit Benutzerdaten (siehe RegisterData)
  *     @returns          { success: true, user } oder { success: false, error }
  *
- *   'auth:login' (credentials: { email: string; password: string }):
+ *   'auth:login' (credentials: LoginCredentials):
  *     Meldet einen Benutzer an.
  *     @param credentials   Objekt mit email, password
  *     @returns             { success: true, user } oder { success: false, error }
@@ -48,41 +49,22 @@ import { authService } from '../database/services/authService';
  */
 export function initializeAuthIPC(): void {
 	// Register user
-	ipcMain.handle(
-		'auth:register',
-		async (
-			_event,
-			userData: {
-				name: string;
-				email: string;
-				password: string;
-			},
-		) => {
-			try {
-				const user = await authService.register(userData);
-				return { success: true, user };
-			} catch (error) {
-				return { success: false, error: (error as Error).message };
-			}
-		},
-	);
+	ipcMain.handle('auth:register', async (_event, userData: RegisterData) => {
+		try {
+			const result = await authService.register(userData);
+			return result;
+		} catch (error) {
+			return { success: false, error: (error as Error).message };
+		}
+	});
 
 	// Login user
 	ipcMain.handle(
 		'auth:login',
-		async (
-			_event,
-			credentials: {
-				email: string;
-				password: string;
-			},
-		) => {
+		async (_event, credentials: LoginCredentials) => {
 			try {
-				const user = await authService.login(
-					credentials.email,
-					credentials.password,
-				);
-				return { success: true, user };
+				const result = await authService.login(credentials);
+				return result;
 			} catch (error) {
 				return { success: false, error: (error as Error).message };
 			}

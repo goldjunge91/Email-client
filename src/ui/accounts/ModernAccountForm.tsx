@@ -1,18 +1,17 @@
+/* eslint-disable jsx-a11y/label-has-associated-control */
+/* eslint-disable react/button-has-type */
 import React, { useState } from 'react';
 import {
 	Mail,
 	Lock,
 	Server,
 	Globe,
-	Shield,
 	AlertCircle,
 	CheckCircle,
 	Loader2,
 	Eye,
 	EyeOff,
-	HelpCircle,
 	Zap,
-	Info,
 } from 'lucide-react';
 
 interface AccountFormData {
@@ -151,7 +150,9 @@ export default function ModernAccountForm({
 
 		try {
 			// Simulate verification process
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			await new Promise((resolve) => {
+				setTimeout(resolve, 2000);
+			});
 
 			// In real implementation, call the electron API here
 			// const result = await window.electron.verifyAccount(formData);
@@ -188,8 +189,10 @@ export default function ModernAccountForm({
 					<div className="flex items-center justify-between">
 						<h2 className="text-xl font-semibold">Add Email Account</h2>
 						<button
+							type="button"
 							onClick={onClose}
 							className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+							aria-label="Close"
 						>
 							<svg
 								className="w-5 h-5"
@@ -441,7 +444,7 @@ export default function ModernAccountForm({
 											onChange={(e) =>
 												setFormData((prev) => ({
 													...prev,
-													incomingPort: parseInt(e.target.value),
+													incomingPort: parseInt(e.target.value, 10),
 												}))
 											}
 											className="w-full px-3 py-2 bg-zinc-800 rounded-lg text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -524,7 +527,7 @@ export default function ModernAccountForm({
 											onChange={(e) =>
 												setFormData((prev) => ({
 													...prev,
-													outgoingPort: parseInt(e.target.value),
+													outgoingPort: parseInt(e.target.value, 10),
 												}))
 											}
 											className="w-full px-3 py-2 bg-zinc-800 rounded-lg text-sm placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"

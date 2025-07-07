@@ -6,12 +6,15 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { MailAccount, Mail, MailFolder, MailRule } from '../types/mail';
+import {
+	ImapConnectionOptions,
+	SmtpConnectionOptions,
+} from '../core/mail/types';
 
 const channels = Object.values(ipcChannels);
 
 // Mail-specific channels
 const mailChannels = [
-	'verify-account',
 	'mail:add-account',
 	'mail:remove-account',
 	'mail:update-account',
@@ -34,6 +37,9 @@ const mailChannels = [
 	'mail:apply-rules',
 	'mail:export-rules',
 	'mail:import-rules',
+	'mail:get-all-accounts',
+	'mail:verify-imap-connection',
+	'mail:verify-smtp-connection',
 	// Window management
 	'window:open-mail',
 	'set-mail-id',
@@ -48,8 +54,24 @@ const mailChannels = [
 	'mail:error',
 ];
 
+const authChannels = [
+	'auth:register',
+	'auth:login',
+	'auth:get-user',
+	'auth:update-profile',
+	'auth:change-password',
+	'auth:delete-account',
+];
+
+const googleAuthChannels = [
+	'google:authenticate',
+	'google:link-account',
+	'google:get-linked-accounts',
+	'google:refresh-token',
+];
+
 // Erweitere die Kanalliste um alle Mail-Kanäle
-const allChannels = [...channels, ...mailChannels];
+const allChannels = [...channels, ...mailChannels, ...authChannels, ...googleAuthChannels];
 
 const electronHandler = {
 	os: getOS(),
@@ -64,23 +86,24 @@ const electronHandler = {
 	playSound: (sound: string) => ipcRenderer.send(ipcChannels.PLAY_SOUND, sound),
 	openUrl: (url: string) => ipcRenderer.send(ipcChannels.OPEN_URL, url),
 
-	// TODO new function added to verify account
-	verifyAccount: (account: any) =>
-		ipcRenderer.invoke('verify-account', account),
-
 	// Mail API
 	mail: {
 		// Account Operations
 		addAccount: (account: MailAccount) =>
 			ipcRenderer.invoke('mail:add-account', account),
-		removeAccount: (accountId: string) =>
+		removeAccount: (accountId: number) =>
 			ipcRenderer.invoke('mail:remove-account', accountId),
-		updateAccount: (accountId: string, account: MailAccount) =>
+		updateAccount: (accountId: number, account: MailAccount) =>
 			ipcRenderer.invoke('mail:update-account', accountId, account),
 		connectAccount: (accountId: string) =>
 			ipcRenderer.invoke('mail:connect-account', accountId),
 		disconnectAccount: (accountId: string) =>
 			ipcRenderer.invoke('mail:disconnect-account', accountId),
+		getAllAccounts: () => ipcRenderer.invoke('mail:get-all-accounts'),
+		verifyImapConnection: (options: ImapConnectionOptions) =>
+			ipcRenderer.invoke('mail:verify-imap-connection', options),
+		verifySmtpConnection: (options: SmtpConnectionOptions) =>
+			ipcRenderer.invoke('mail:verify-smtp-connection', options),
 
 		// Folder Operations
 		getFolders: (accountId: string) =>
@@ -163,6 +186,17 @@ const electronHandler = {
 			ipcRenderer.on('mail:folders-received', (_event, accountId, folders) =>
 				callback(accountId, folders),
 			),
+	},
+
+	// Google Auth
+	google: {
+		authenticate: () => ipcRenderer.invoke('google:authenticate'),
+		linkAccount: (data: { userId: string; tokens: any; userInfo: any }) =>
+			ipcRenderer.invoke('google:link-account', data),
+		getLinkedAccounts: (userId: string) =>
+			ipcRenderer.invoke('google:get-linked-accounts', userId),
+		refreshToken: (accountId: number) =>
+			ipcRenderer.invoke('google:refresh-token', accountId),
 	},
 
 	// Window Management

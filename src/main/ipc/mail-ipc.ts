@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import { MailAccount, MailRule } from '@/types/mail';
-import { ImapClient } from '../../core/mail/imapClient';
-import { SmtpClient } from '../../core/mail/smtpClient';
+import { ImapClient, ImapConnectionOptions } from '../../core/mail/imapClient';
+import { SmtpClient, SmtpConnectionOptions } from '../../core/mail/smtpClient';
 import { ruleEngine } from '../../core/rules/ruleEngine';
 import { mailService } from '../database/services/mailService';
 
@@ -13,30 +13,30 @@ export const initializeMailIpc = () => {
 	// Account Management
 	ipcMain.handle('mail:add-account', async (_event, account: MailAccount) => {
 		try {
-			await mailService.addAccount(account);
-			return { success: true, data: account };
+			const newAccount = await mailService.createAccount(account);
+			return { success: true, data: newAccount };
 		} catch (error) {
 			return { success: false, error: (error as Error).message };
 		}
 	});
 
-	ipcMain.handle('mail:remove-account', async (_event, accountId: string) => {
+	ipcMain.handle('mail:remove-account', async (_event, accountId: number) => {
 		try {
 			// Disconnect clients
-			const imapClient = imapClients.get(accountId);
-			const smtpClient = smtpClients.get(accountId);
+			const imapClient = imapClients.get(accountId.toString());
+			const smtpClient = smtpClients.get(accountId.toString());
 
 			if (imapClient) {
 				imapClient.disconnect();
-				imapClients.delete(accountId);
+				imapClients.delete(accountId.toString());
 			}
 
 			if (smtpClient) {
 				smtpClient.disconnect();
-				smtpClients.delete(accountId);
+				smtpClients.delete(accountId.toString());
 			}
 
-			await mailService.removeAccount(accountId);
+			await mailService.deleteAccount(accountId);
 			return { success: true };
 		} catch (error) {
 			return { success: false, error: (error as Error).message };
@@ -45,7 +45,7 @@ export const initializeMailIpc = () => {
 
 	ipcMain.handle(
 		'mail:update-account',
-		async (_event, accountId: string, updates: Partial<MailAccount>) => {
+		async (_event, accountId: number, updates: Partial<MailAccount>) => {
 			try {
 				await mailService.updateAccount(accountId, updates);
 				return { success: true };
@@ -55,7 +55,44 @@ export const initializeMailIpc = () => {
 		},
 	);
 
+	ipcMain.handle('mail:get-all-accounts', async () => {
+		try {
+			const accounts = await mailService.getAllAccounts();
+			return { success: true, data: accounts };
+		} catch (error) {
+			return { success: false, error: (error as Error).message };
+		}
+	});
+
 	// Connection Management
+	ipcMain.handle(
+		'mail:verify-imap-connection',
+		async (_event, options: ImapConnectionOptions) => {
+			try {
+				const imapClient = new ImapClient('temp'); // Use a temporary ID for verification
+				await imapClient.connect(options);
+				imapClient.disconnect();
+				return { success: true };
+			} catch (error) {
+				return { success: false, error: (error as Error).message };
+			}
+		},
+	);
+
+	ipcMain.handle(
+		'mail:verify-smtp-connection',
+		async (_event, options: SmtpConnectionOptions) => {
+			try {
+				const smtpClient = new SmtpClient('temp'); // Use a temporary ID for verification
+				await smtpClient.connect(options);
+				smtpClient.disconnect();
+				return { success: true };
+			} catch (error) {
+				return { success: false, error: (error as Error).message };
+			}
+		},
+	);
+
 	ipcMain.handle('mail:connect-account', async (_event, accountId: string) => {
 		try {
 			const account = await mailService.getAccount(accountId);

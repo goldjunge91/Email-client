@@ -10,14 +10,14 @@ export class MailService {
 
 	// Account Management
 	async createAccount(
-		account: Omit<MailAccount, 'id' | 'created_at' | 'updated_at'>,
+		account: Omit<MailAccount, 'id' | 'createdAt' | 'updatedAt'>,
 	): Promise<MailAccount> {
 		const accountData = {
 			...account,
 			// Encrypt password before storing
 			password: EncryptionService.encrypt(account.password),
-			created_at: new Date(),
-			updated_at: new Date(),
+			createdAt: new Date(),
+			updatedAt: new Date(),
 		};
 
 		const [newAccount] = await this.db
@@ -36,9 +36,16 @@ export class MailService {
 		const accounts = await this.db
 			.select()
 			.from(mailAccounts)
-			.where(eq(mailAccounts.is_active, true))
-			.orderBy(mailAccounts.created_at);
-		return accounts as MailAccount[];
+			.where(eq(mailAccounts.isActive, true))
+			.orderBy(mailAccounts.createdAt);
+
+		const decryptedAccounts = await Promise.all(
+			accounts.map(async (account) => ({
+				...account,
+				password: await EncryptionService.decrypt(account.password),
+			})),
+		);
+		return decryptedAccounts as MailAccount[];
 	}
 
 	async getAccountsByUserId(userId: number): Promise<MailAccount[]> {
@@ -46,11 +53,10 @@ export class MailService {
 			.select()
 			.from(mailAccounts)
 			.where(
-				and(eq(mailAccounts.user_id, userId), eq(mailAccounts.is_active, true)),
+				and(eq(mailAccounts.userId, userId), eq(mailAccounts.isActive, true)),
 			)
-			.orderBy(mailAccounts.created_at);
+			.orderBy(mailAccounts.createdAt);
 
-		// Decrypt passwords for returned accounts
 		const decryptedAccounts = await Promise.all(
 			accounts.map(async (account) => ({
 				...account,
@@ -69,7 +75,6 @@ export class MailService {
 
 		if (!account) return null;
 
-		// Decrypt password when retrieving
 		return {
 			...account,
 			password: await EncryptionService.decrypt(account.password),
@@ -80,11 +85,14 @@ export class MailService {
 		id: number,
 		updates: Partial<MailAccount>,
 	): Promise<MailAccount> {
+		if (updates.password) {
+			updates.password = await EncryptionService.encrypt(updates.password);
+		}
 		const [updatedAccount] = await this.db
 			.update(mailAccounts)
 			.set({
 				...updates,
-				updated_at: new Date(),
+				updatedAt: new Date(),
 			})
 			.where(eq(mailAccounts.id, id))
 			.returning();
@@ -95,8 +103,8 @@ export class MailService {
 		await this.db
 			.update(mailAccounts)
 			.set({
-				is_active: false,
-				updated_at: new Date(),
+				isActive: false,
+				updatedAt: new Date(),
 			})
 			.where(eq(mailAccounts.id, id));
 	}

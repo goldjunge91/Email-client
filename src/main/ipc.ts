@@ -2,6 +2,7 @@
 import { Menu, app, ipcMain, shell } from 'electron';
 import Account from '@/types/mail';
 import { initializeMailIpc } from './ipc/mail-ipc';
+import { setupGoogleAuthHandlers } from './ipc/googleAuth';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { CustomAcceleratorsType } from '../types/keyboard';
@@ -31,6 +32,7 @@ export default {
 		initializeAuthIPC();
 		initializeEncryptionIPC();
 		initializeMailIpc();
+		setupGoogleAuthHandlers();
 
 		// Activate the idle state when the renderer process is ready
 		ipcMain.once(ipcChannels.RENDERER_READY, () => {

@@ -12,7 +12,6 @@ import { Layout } from './components/layout/Layout';
 const container = document.getElementById('root') as HTMLElement;
 const root = createRoot(container);
 root.render(
-	// <React.StrictMode>
 	<AuthProvider>
 		<GlobalContextProvider>
 			<ThemeProvider>
@@ -27,7 +26,4 @@ root.render(
 			</ThemeProvider>
 		</GlobalContextProvider>
 	</AuthProvider>,
-	{
-		/* </React.StrictMode> */
-	},
 );

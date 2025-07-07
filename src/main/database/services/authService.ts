@@ -97,6 +97,7 @@ export class AuthService {
 	 * Benutzer anmelden
 	 */
 	async login(credentials: LoginCredentials): Promise<AuthResult> {
+		console.log('Login attempt for:', credentials.email);
 		try {
 			// Benutzer suchen
 			const [user] = await this.db
@@ -106,22 +107,31 @@ export class AuthService {
 				.limit(1);
 
 			if (!user) {
+				console.log('Login failed: User not found');
 				return { success: false, error: 'Ungültige E-Mail oder Passwort' };
 			}
+			console.log('User found:', user.email);
 
 			if (!user.isActive) {
+				console.log('Login failed: User account is deactivated');
 				return { success: false, error: 'Konto ist deaktiviert' };
 			}
 
 			// Passwort prüfen
+			console.log('Stored salt:', user.salt);
 			const hashedPassword = AuthService.hashPassword(
 				credentials.password,
 				user.salt,
 			);
+			console.log('Hashed password:', hashedPassword);
+			console.log('Stored password hash:', user.passwordHash);
+
 			if (hashedPassword !== user.passwordHash) {
+				console.log('Login failed: Password mismatch');
 				return { success: false, error: 'Ungültige E-Mail oder Passwort' };
 			}
 
+			console.log('Login successful');
 			// Letzten Login aktualisieren
 			await this.db
 				.update(users)

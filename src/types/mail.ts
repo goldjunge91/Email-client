@@ -72,52 +72,26 @@ export interface MailFolder {
 }
 
 export interface MailAccount {
-	id: string;
-	email: string;
+	id: number;
+	userId: number;
 	name: string;
-	displayName?: string;
-	avatar?: string;
-	isDefault: boolean;
+	email: string;
+	provider: string;
+	imapHost: string;
+	imapPort: number;
+	imapSecure: boolean;
+	smtpHost: string;
+	smtpPort: number;
+	smtpSecure: boolean;
+	username: string;
+	password: string;
+	oauthAccessToken?: string;
+	oauthRefreshToken?: string;
+	oauthTokenExpiry?: Date;
 	isActive: boolean;
-	settings: {
-		incomingServer: {
-			type: 'imap' | 'pop3';
-			host: string;
-			port: number;
-			secure: boolean;
-			auth: {
-				user: string;
-				pass: string;
-			};
-			tls?: {
-				rejectUnauthorized: boolean;
-			};
-		};
-		outgoingServer: {
-			type: 'smtp';
-			host: string;
-			port: number;
-			secure: boolean;
-			auth: {
-				user: string;
-				pass: string;
-			};
-			tls?: {
-				rejectUnauthorized: boolean;
-			};
-		};
-		autoSync: boolean;
-		syncInterval: number;
-		maxSyncItems: number;
-		syncOnStartup: boolean;
-	};
-	folders: MailFolder[];
-	stats: {
-		totalMails: number;
-		unreadMails: number;
-		lastSync: Date;
-		storageUsed: number;
-	};
+	lastSyncDate?: Date;
+	syncStatus: string;
+	syncError?: string;
 	createdAt: Date;
 	updatedAt: Date;
 }

@@ -9,8 +9,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@/renderer/components/ui/card';
-import { Alert, AlertDescription } from '@/renderer/components/ui/alert';
-import { Loader2, Mail, Lock, User, AlertCircle } from 'lucide-react';
+import { Loader2, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '@/renderer/context/AuthContextNew';
 
 interface RegisterFormProps {
@@ -64,32 +63,35 @@ export function RegisterForm({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setIsLoading(true);
 		setError(null);
 
 		const validationError = validateForm();
 		if (validationError) {
+			setIsLoading(false);
 			setError(validationError);
 			return;
 		}
-
-		setIsLoading(true);
 
 		try {
 			const result = await register({
 				email: formData.email,
 				username: formData.username,
 				password: formData.password,
-				firstName: formData.firstName || undefined,
-				lastName: formData.lastName || undefined,
+				firstName: formData.firstName,
+				lastName: formData.lastName,
 			});
-
-			if (result.success) {
-				onSuccess?.();
+			if (result && result.success) {
+				if (onSuccess) onSuccess();
 			} else {
-				setError(result.error || 'Registrierung fehlgeschlagen');
+				setError(result?.error || 'Registrierung fehlgeschlagen.');
 			}
-		} catch {
-			setError('Ein unerwarteter Fehler ist aufgetreten');
+		} catch (err: any) {
+			setError(
+				err?.message ||
+					err?.response?.data?.error ||
+					'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.',
+			);
 		} finally {
 			setIsLoading(false);
 		}
@@ -103,13 +105,6 @@ export function RegisterForm({
 			</CardHeader>
 			<CardContent>
 				<form onSubmit={handleSubmit} className="space-y-4">
-					{error && (
-						<Alert variant="destructive">
-							<AlertCircle className="h-4 w-4" />
-							<AlertDescription>{error}</AlertDescription>
-						</Alert>
-					)}
-
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
 							<Label htmlFor="firstName">Vorname</Label>
@@ -208,6 +203,12 @@ export function RegisterForm({
 							/>
 						</div>
 					</div>
+
+					{error && (
+						<p className="text-red-500 text-sm mt-2" role="alert">
+							{error}
+						</p>
+					)}
 
 					<Button type="submit" className="w-full" disabled={isLoading}>
 						{isLoading ? (

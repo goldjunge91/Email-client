@@ -226,6 +226,36 @@ export const mailLabelRelations = pgTable('mail_label_relations', {
 		.references(() => mailLabels.id, { onDelete: 'cascade' }),
 });
 
+// Devices Table
+export const devices = pgTable('devices', {
+	id: serial('id').primaryKey(),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	name: varchar('name', { length: 255 }).notNull(),
+	type: varchar('type', { length: 50 }).notNull(), // e.g., 'desktop', 'mobile', 'web'
+	deviceIdentifier: varchar('device_identifier', { length: 255 })
+		.notNull()
+		.unique(),
+	lastUsedAt: timestamp('last_used_at').notNull().defaultNow(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Sessions Table
+export const sessions = pgTable('sessions', {
+	id: serial('id').primaryKey(),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	deviceId: integer('device_id')
+		.notNull()
+		.references(() => devices.id, { onDelete: 'cascade' }),
+	sessionToken: varchar('session_token', { length: 255 }).notNull().unique(),
+	expiresAt: timestamp('expires_at').notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+
 // Sync Status Table für detailliertere Sync-Informationen
 export const syncStatus = pgTable('sync_status', {
 	id: serial('id').primaryKey(),
@@ -269,6 +299,12 @@ export type NewMailAttachment = typeof mailAttachments.$inferInsert;
 
 export type MailLabel = typeof mailLabels.$inferSelect;
 export type NewMailLabel = typeof mailLabels.$inferInsert;
+
+export type Device = typeof devices.$inferSelect;
+export type NewDevice = typeof devices.$inferInsert;
+
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
 
 export type SyncStatus = typeof syncStatus.$inferSelect;
 export type NewSyncStatus = typeof syncStatus.$inferInsert;

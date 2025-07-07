@@ -1,12 +1,12 @@
+/* eslint-disable no-console */
 import React, { useState } from 'react';
-// Passe den Pfad ggf. an, falls 'Account' woanders liegt
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Account } from '../../core/mail/imapClient';
+import type { NewMailAccount } from '../../types/mail';
 
-function AccountForm() {
+function AccountForm({ onSuccess }: { onSuccess?: () => void }) {
 	const [status, setStatus] = useState<{
 		loading: boolean;
 		error: string | null;
@@ -16,10 +16,14 @@ function AccountForm() {
 		error: null,
 		success: false,
 	});
-
-	const [server, setServer] = useState('');
-	const [port, setPort] = useState(993);
-	const [ssl, setSsl] = useState(true);
+	const [name, setName] = useState('');
+	const [email, setEmail] = useState('');
+	const [imapHost, setImapHost] = useState('');
+	const [imapPort, setImapPort] = useState(993);
+	const [imapSecure, setImapSecure] = useState(true);
+	const [smtpHost, setSmtpHost] = useState('');
+	const [smtpPort, setSmtpPort] = useState(587);
+	const [smtpSecure, setSmtpSecure] = useState(true);
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 
@@ -27,19 +31,88 @@ function AccountForm() {
 		e.preventDefault();
 		setStatus({ loading: true, error: null, success: false });
 
-		const accountData: Account = { server, port, ssl, username, password };
+		const accountData: Omit<
+			NewMailAccount,
+			| 'id'
+			| 'createdAt'
+			| 'updatedAt'
+			| 'lastSyncDate'
+			| 'syncStatus'
+			| 'syncError'
+		> = {
+			userId: 1, // Placeholder for now
+			name,
+			email,
+			provider: 'custom', // Assuming custom for now
+			imapHost,
+			imapPort,
+			imapSecure,
+			smtpHost,
+			smtpPort,
+			smtpSecure,
+			username,
+			password,
+			isActive: true,
+		};
 
-		// FIX 1: window.electron statt window.api verwenden
-		const result = await window.electron.verifyAccount(accountData);
+		try {
+			// Verify IMAP connection
+			const imapVerifyResult = await window.electron.mail.verifyImapConnection({
+				user: username,
+				password,
+				host: imapHost,
+				port: imapPort,
+				tls: imapSecure,
+			});
 
-		if (result.success) {
-			setStatus({ loading: false, error: null, success: true });
-			// eslint-disable-next-line no-console
-			console.log('Verbindung erfolgreich! Account kann gespeichert werden.');
-		} else {
+			if (!imapVerifyResult.success) {
+				setStatus({
+					loading: false,
+					error: imapVerifyResult.error || 'IMAP-Verbindung fehlgeschlagen.',
+					success: false,
+				});
+				return;
+			}
+
+			// Verify SMTP connection
+			const smtpVerifyResult = await window.electron.mail.verifySmtpConnection({
+				host: smtpHost,
+				port: smtpPort,
+				secure: smtpSecure,
+				auth: {
+					user: username,
+					pass: password,
+				},
+			});
+
+			if (!smtpVerifyResult.success) {
+				setStatus({
+					loading: false,
+					error: smtpVerifyResult.error || 'SMTP-Verbindung fehlgeschlagen.',
+					success: false,
+				});
+				return;
+			}
+
+			// Save account to database
+			const saveResult = await window.electron.mail.addAccount(accountData);
+
+			if (saveResult.success) {
+				setStatus({ loading: false, error: null, success: true });
+				console.log('Konto erfolgreich hinzugefügt und verifiziert!');
+				onSuccess?.(); // Call onSuccess callback
+				// Optionally clear form or redirect
+			} else {
+				setStatus({
+					loading: false,
+					error: saveResult.error || 'Fehler beim Speichern des Kontos.',
+					success: false,
+				});
+			}
+		} catch (error: any) {
 			setStatus({
 				loading: false,
-				error: result.error || 'Ein unbekannter Fehler ist aufgetreten.',
+				error: error.message || 'Ein unbekannter Fehler ist aufgetreten.',
 				success: false,
 			});
 		}
@@ -48,25 +121,97 @@ function AccountForm() {
 	return (
 		<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 			<div className="grid gap-2">
-				<Label htmlFor="server">IMAP-Server</Label>
+				<Label htmlFor="name">Kontoname</Label>
 				<Input
-					id="server"
+					id="name"
 					type="text"
-					value={server}
-					onChange={(e) => setServer(e.target.value)}
+					value={name}
+					onChange={(e) => setName(e.target.value)}
 					required
 				/>
 			</div>
 
 			<div className="grid gap-2">
-				<Label htmlFor="port">Port</Label>
+				<Label htmlFor="email">E-Mail Adresse</Label>
 				<Input
-					id="port"
-					type="number"
-					value={port}
-					onChange={(e) => setPort(Number(e.target.value))}
+					id="email"
+					type="email"
+					value={email}
+					onChange={(e) => setEmail(e.target.value)}
 					required
 				/>
+			</div>
+
+			<div className="grid gap-2">
+				<Label htmlFor="imapHost">IMAP-Server</Label>
+				<Input
+					id="imapHost"
+					type="text"
+					value={imapHost}
+					onChange={(e) => setImapHost(e.target.value)}
+					required
+				/>
+			</div>
+
+			<div className="grid gap-2">
+				<Label htmlFor="imapPort">IMAP-Port</Label>
+				<Input
+					id="imapPort"
+					type="number"
+					value={imapPort}
+					onChange={(e) => setImapPort(Number(e.target.value))}
+					required
+				/>
+			</div>
+
+			<div className="flex items-center space-x-2">
+				<Checkbox
+					id="imapSecure"
+					checked={imapSecure}
+					onCheckedChange={(checked) => setImapSecure(Boolean(checked))}
+				/>
+				<Label
+					htmlFor="imapSecure"
+					className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+				>
+					IMAP SSL/TLS verwenden
+				</Label>
+			</div>
+
+			<div className="grid gap-2">
+				<Label htmlFor="smtpHost">SMTP-Server</Label>
+				<Input
+					id="smtpHost"
+					type="text"
+					value={smtpHost}
+					onChange={(e) => setSmtpHost(e.target.value)}
+					required
+				/>
+			</div>
+
+			<div className="grid gap-2">
+				<Label htmlFor="smtpPort">SMTP-Port</Label>
+				<Input
+					id="smtpPort"
+					type="number"
+					value={smtpPort}
+					onChange={(e) => setSmtpPort(Number(e.target.value))}
+					required
+				/>
+			</div>
+
+			<div className="flex items-center space-x-2">
+				<Checkbox
+					id="smtpSecure"
+					checked={smtpSecure}
+					onCheckedChange={(checked) => setSmtpSecure(Boolean(checked))}
+				/>
+				<Label
+					htmlFor="smtpSecure"
+					className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+				>
+					SMTP SSL/TLS verwenden
+				</Label>
 			</div>
 
 			<div className="grid gap-2">
@@ -89,21 +234,6 @@ function AccountForm() {
 					onChange={(e) => setPassword(e.target.value)}
 					required
 				/>
-			</div>
-
-			{/* FIX 2: Checkbox korrekt mit Label verknüpft */}
-			<div className="flex items-center space-x-2">
-				<Checkbox
-					id="ssl"
-					checked={ssl}
-					onCheckedChange={(checked) => setSsl(Boolean(checked))}
-				/>
-				<Label
-					htmlFor="ssl"
-					className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-				>
-					SSL/TLS verwenden
-				</Label>
 			</div>
 
 			<Button type="submit" disabled={status.loading}>

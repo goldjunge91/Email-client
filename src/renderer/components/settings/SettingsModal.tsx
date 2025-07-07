@@ -1,10 +1,6 @@
+/* eslint-disable no-nested-ternary */
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from '@/renderer/components/ui/dialog';
+import { Dialog, DialogContent } from '@/renderer/components/ui/dialog';
 import { Button } from '@/renderer/components/ui/button';
 import { Separator } from '@/renderer/components/ui/separator';
 import {
@@ -25,17 +21,13 @@ import {
 	CreditCard,
 	LogOut,
 	ChevronRight,
-	Trash2,
-	Edit,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/renderer/context/AuthContextNew';
-// import { mailService } from './renderer/utils/mailService';
-// import type { MailAccount } from './renderer/utils/mailService';
+
 import { MailService, mailService } from '@/renderer/utils/mailService';
 import { AddAccountModal } from './AddAccountModal';
 import { ProfileEditModal } from './ProfileEditModal';
-// import { MailService, mailService } from '../../utils/mailService';
+import { DeviceListModal } from './DeviceListModal';
 import type { MailAccount } from '../../../types/mail';
 
 interface SettingsModalProps {
@@ -70,6 +62,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 	const [accounts, setAccounts] = useState<MailAccount[]>([]);
 	const [showAddAccount, setShowAddAccount] = useState(false);
 	const [showProfileEdit, setShowProfileEdit] = useState(false);
+	const [showDeviceList, setShowDeviceList] = useState(false);
 	const [loadingAccounts, setLoadingAccounts] = useState(false);
 	const { user, logout } = useAuth();
 
@@ -133,7 +126,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 				</Avatar>
 				<div>
 					<h3 className="text-lg font-semibold">
-						{user?.name || 'Unbekannter Benutzer'}
+						{user?.name || user?.email || 'Unbekannter Benutzer'}
 					</h3>
 					<p className="text-sm text-muted-foreground">
 						{user?.email || 'Keine E-Mail'}
@@ -170,7 +163,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 							</p>
 						</div>
 					</div>
-					<Button variant="ghost" size="sm">
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => setShowDeviceList(true)}
+					>
 						Geräte anzeigen
 						<ChevronRight className="ml-2 h-4 w-4" />
 					</Button>
@@ -243,69 +240,67 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
 	const renderAccountsSection = () => (
 		<div className="space-y-6">
-			<div>
-				<h3 className="text-lg font-semibold mb-4">E-Mail-Konten</h3>
-				{loadingAccounts ? (
-					<div className="flex items-center justify-center p-8">
-						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-					</div>
-				) : (
-					<div className="space-y-3">
-						{accounts.map((account) => (
-							<div
-								key={account.id}
-								className="flex items-center justify-between p-4 border rounded-lg"
-							>
-								<div className="flex items-center space-x-3">
-									<Avatar className="h-10 w-10">
-										<AvatarFallback>
-											{account.email.charAt(0).toUpperCase()}
-										</AvatarFallback>
-									</Avatar>
-									<div>
-										<p className="font-medium">{account.display_name}</p>
-										<p className="text-sm text-muted-foreground">
-											{account.email}
-										</p>
-									</div>
+			<div className="flex items-center justify-between">
+				<h2 className="text-lg font-semibold">Verknüpfte Mail-Konten</h2>
+				<Button
+					onClick={() => setShowAddAccount(true)}
+					variant="default"
+					size="sm"
+				>
+					Konto hinzufügen
+				</Button>
+			</div>
+			{loadingAccounts ? (
+				<div>Lade Konten...</div>
+			) : accounts.length === 0 ? (
+				<div className="text-muted-foreground">
+					Noch keine Mail-Konten verknüpft.
+				</div>
+			) : (
+				<ul className="divide-y divide-border">
+					{accounts.map((account) => (
+						<li
+							key={account.id}
+							className="flex items-center justify-between py-3"
+						>
+							<div>
+								<div className="font-medium">
+									{account.name || account.email}
 								</div>
-								<div className="flex space-x-2">
-									<Button variant="outline" size="sm">
-										<Edit className="h-4 w-4 mr-2" />
-										Bearbeiten
-									</Button>
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={() => handleDeleteAccount(account.id)}
-									>
-										<Trash2 className="h-4 w-4 mr-2" />
-										Löschen
-									</Button>
+								<div className="text-xs text-muted-foreground">
+									{account.email}
 								</div>
 							</div>
-						))}
-						<Button
-							variant="outline"
-							className="w-full"
-							onClick={() => setShowAddAccount(true)}
-						>
-							+ Neues Konto hinzufügen
-						</Button>
-					</div>
-				)}
-			</div>
+							<Button
+								variant="destructive"
+								size="sm"
+								onClick={() => handleDeleteAccount(account.id)}
+								disabled={loadingAccounts}
+							>
+								Entfernen
+							</Button>
+						</li>
+					))}
+				</ul>
+			)}
+			{/* Modal zum Hinzufügen eines Accounts */}
+			{showAddAccount && (
+				<AddAccountModal
+					open={showAddAccount}
+					onOpenChange={setShowAddAccount}
+					onAccountAdded={handleAccountAdded}
+					userId={user?.id}
+				/>
+			)}
 		</div>
 	);
 
 	const renderContent = () => {
 		switch (activeSection) {
-			case 'account':
-				return renderAccountSection();
-			case 'general':
-				return renderGeneralSection();
 			case 'accounts':
 				return renderAccountsSection();
+			case 'general':
+				return renderGeneralSection();
 			case 'teams':
 				return (
 					<div className="space-y-6">
@@ -346,44 +341,30 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 					</div>
 				);
 			default:
-				return null;
+				return renderAccountSection();
 		}
 	};
 
 	return (
 		<>
 			<Dialog open={open} onOpenChange={onOpenChange}>
-				<DialogContent className="max-w-4xl h-[600px] p-0">
-					<DialogHeader className="p-6 pb-0">
-						<DialogTitle>Einstellungen</DialogTitle>
-					</DialogHeader>
+				<DialogContent className="max-w-2xl w-full">
 					<div className="flex h-full">
-						{/* Sidebar Navigation */}
-						<div className="w-64 border-r bg-muted/30 p-4">
-							<nav className="space-y-2">
-								{settingsNavigation.map((item) => {
-									const Icon = item.icon;
-									return (
-										<button
-											key={item.id}
-											type="button"
-											onClick={() => setActiveSection(item.id)}
-											className={cn(
-												'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors',
-												activeSection === item.id
-													? 'bg-primary text-primary-foreground'
-													: 'hover:bg-muted',
-											)}
-										>
-											<Icon className="h-5 w-5" />
-											<span className="text-sm font-medium">{item.label}</span>
-										</button>
-									);
-								})}
-							</nav>
-						</div>
-
-						{/* Main Content */}
+						{/* Navigation */}
+						<nav className="w-56 border-r border-border py-6 pr-4 flex flex-col gap-2">
+							{settingsNavigation.map((item) => (
+								<Button
+									key={item.id}
+									variant={activeSection === item.id ? 'secondary' : 'ghost'}
+									className="justify-start w-full"
+									onClick={() => setActiveSection(item.id)}
+								>
+									<item.icon className="w-4 h-4 mr-2" />
+									{item.label}
+								</Button>
+							))}
+						</nav>
+						{/* Content */}
 						<div className="flex-1 p-6 overflow-y-auto">{renderContent()}</div>
 					</div>
 				</DialogContent>
@@ -400,6 +381,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 					<ProfileEditModal
 						open={showProfileEdit}
 						onOpenChange={setShowProfileEdit}
+					/>
+					<DeviceListModal
+						open={showDeviceList}
+						onOpenChange={setShowDeviceList}
 					/>
 				</>
 			)}

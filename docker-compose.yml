@@ -1,13 +1,9 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
     container_name: mail-app-postgres
-    environment:
-      POSTGRES_USER: mailapp
-      POSTGRES_PASSWORD: dev_password_123
-      POSTGRES_DB: mailapp_db
+    env_file:
+      - .env.local
     ports:
       - "5432:5432"
     volumes:
@@ -24,9 +20,8 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: mail-app-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@mailapp.local
-      PGADMIN_DEFAULT_PASSWORD: admin123
+    env_file:
+      - .env.local
     ports:
       - "8080:80"
     depends_on:
